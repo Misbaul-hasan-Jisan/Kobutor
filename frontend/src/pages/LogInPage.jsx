@@ -15,6 +15,7 @@ const LoginPage = () => {
   const [isDark, setIsDark] = useState(false);
   const navigate = useNavigate();
 
+  // Load saved theme
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
     if (savedTheme) {
@@ -23,6 +24,7 @@ const LoginPage = () => {
     }
   }, []);
 
+  // Apply theme toggle
   useEffect(() => {
     document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
@@ -36,36 +38,40 @@ const LoginPage = () => {
       const response = await fetch("http://localhost:3000/api/auth/login/kobutor", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({
+          email: email.trim(),
+          password: password.toString(), // ensure it's a string
+        }),
       });
 
-      if (response.ok) {
-        const userData = await response.json();
-        localStorage.setItem("kobutorUser", JSON.stringify(userData));
-        navigate("/");
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "Invalid email or password");
         return;
       }
 
-      setError("Invalid email or password");
+      // ✅ Store token and user separately
+      localStorage.setItem("kobutor_token", data.token);
+      localStorage.setItem("kobutor_user", JSON.stringify(data.user));
+
+      navigate("/release");
     } catch (err) {
-      setError("Failed to connect to server");
       console.error("Login error:", err);
+      setError("Failed to connect to server");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const backgroundImage = isDark ? backgroundDark : background;
-
   return (
-   <div
-           className="w-screen min-h-screen bg-cover bg-center text-white flex flex-col transition-all duration-500"
-           style={{ backgroundImage: `url(${isDark ? backgroundDark : background})` }}
-         >
+    <div
+      className="w-screen min-h-screen bg-cover bg-center text-white flex flex-col transition-all duration-500"
+      style={{ backgroundImage: `url(${isDark ? backgroundDark : background})` }}
+    >
       <Header />
       <DarkButton isDark={isDark} setIsDark={setIsDark} />
 
-      {/* Main content area that grows to fill available space */}
       <main className="flex-grow flex items-center justify-center px-4 sm:px-6 py-10 sm:py-16">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -78,7 +84,7 @@ const LoginPage = () => {
           </h2>
 
           {error && (
-            <div className="mb-4 p-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded text-sm">
+            <div className="mb-4 p-2 bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300 rounded text-sm text-center">
               {error}
             </div>
           )}
@@ -97,6 +103,7 @@ const LoginPage = () => {
                 placeholder="you@kobutor.com"
               />
             </div>
+
             <div>
               <label className="block mb-1 text-sm text-gray-700 dark:text-gray-300">
                 Password
@@ -110,6 +117,7 @@ const LoginPage = () => {
                 placeholder="Your password"
               />
             </div>
+
             <button
               type="submit"
               disabled={isLoading}
@@ -120,12 +128,18 @@ const LoginPage = () => {
           </form>
 
           <div className="mt-6 text-center">
-            <a href="/forgot-password" className="text-sm text-blue-600 dark:text-blue-400 hover:underline">
+            <a
+              href="/forgot-password"
+              className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+            >
               Forgot password?
             </a>
             <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
               Don't have an account?{" "}
-              <a href="/signup" className="text-blue-600 dark:text-blue-400 hover:underline">
+              <a
+                href="/signup"
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+              >
                 Sign up
               </a>
             </p>

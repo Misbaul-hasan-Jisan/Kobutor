@@ -1,10 +1,10 @@
-import dotenv from 'dotenv';
-dotenv.config();
+import http from "http";
+import app from "./src/app.js"; // your Express app
+import { initIO } from "./src/sockets/socket.js";
 
-import app from './src/app.js';
+const server = http.createServer(app);
 
-const PORT = process.env.PORT || 5000;
+// Initialize Socket.IO
+initIO(server);
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+server.listen(3000, () => console.log("Server running on port 3000"));

@@ -150,14 +150,31 @@ function Hunt() {
     fetchPigeons();
   }, [huntLocation]);
 
-  const handleCatchPigeon = (id) => {
-    setPigeons(prev => prev.map(pigeon => 
-      pigeon.id === id ? {...pigeon, isCaught: true} : pigeon
-    ));
-    
-    const caughtPigeon = pigeons.find(p => p.id === id);
-    setSelectedMessage(caughtPigeon);
-  };
+ 
+  const handleCatchPigeon = async (id) => {
+  try {
+    const token = localStorage.getItem("kobutor_token");
+    const res = await fetch(`http://localhost:3000/api/pigeons/${id}/catch`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${token}`
+      }
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      // Remove from display
+      setPigeons(prev => prev.filter(p => p.id !== id));
+      // Navigate to chat
+      navigate(`/chat/${data.chatId}`);
+    } else {
+      console.error(data.message);
+    }
+  } catch (err) {
+    console.error("Error catching pigeon:", err);
+  }
+};
+
 
   const closeMessage = () => {
     setSelectedMessage(null);

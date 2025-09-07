@@ -106,6 +106,36 @@ function Chat() {
     };
   }, [selectedChat, socket]);
 
+  useEffect(() => {
+    if (selectedChat && messages.length > 0) {
+      markMessagesAsRead(messages);
+    }
+  }, [selectedChat, messages]);
+
+  // Add this socket listener for read receipts
+  useEffect(() => {
+    const handleMessagesRead = (data) => {
+      if (selectedChat && data.chatId === selectedChat._id) {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            data.messageIds.includes(msg._id)
+              ? {
+                  ...msg,
+                  readBy: [...(msg.readBy || []), data.readBy],
+                  isRead: true,
+                }
+              : msg
+          )
+        );
+      }
+    };
+
+    socket.on("messagesRead", handleMessagesRead);
+
+    return () => {
+      socket.off("messagesRead", handleMessagesRead);
+    };
+  }, [selectedChat, socket]);
   // Fetch chats
   useEffect(() => {
     const fetchChats = async () => {
@@ -167,10 +197,11 @@ function Chat() {
     try {
       const unreadMessages = messagesToMark.filter(
         (msg) =>
-          msg.sender !== currentUserId && !msg.readBy?.includes(currentUserId)
+          (msg.sender._id || msg.sender) !== currentUserId &&
+          !msg.readBy?.includes(currentUserId)
       );
 
-      if (unreadMessages.length > 0) {
+      if (unreadMessages.length > 0 && selectedChat) {
         const messageIds = unreadMessages.map((msg) => msg._id);
         const token = localStorage.getItem("kobutor_token");
 
@@ -195,7 +226,7 @@ function Chat() {
       console.error("Error marking messages as read:", error);
     }
   };
-
+  
   // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -392,6 +423,11 @@ function Chat() {
                         formatDate(messages[idx - 1].createdAt) !==
                           formatDate(msg.createdAt);
 
+                      const isOwnMessage =
+                        (msg.sender._id || msg.sender) === currentUserId;
+                      const isRead =
+                        msg.readBy?.includes(currentUserId) || msg.isRead;
+
                       return (
                         <div key={`${msg._id}-${idx}`}>
                           {showDate && (
@@ -401,14 +437,12 @@ function Chat() {
                           )}
                           <div
                             className={`flex ${
-                              (msg.sender._id || msg.sender) === currentUserId
-                                ? "justify-end"
-                                : "justify-start"
+                              isOwnMessage ? "justify-end" : "justify-start"
                             }`}
                           >
                             <div
                               className={`max-w-xs lg:max-w-md px-4 py-2 rounded-2xl shadow ${
-                                (msg.sender._id || msg.sender) === currentUserId
+                                isOwnMessage
                                   ? "bg-yellow-400 text-black rounded-br-none"
                                   : "bg-white/10 text-white rounded-bl-none"
                               }`}
@@ -417,8 +451,7 @@ function Chat() {
                               <div className="flex justify-end items-center gap-1 mt-1">
                                 <span
                                   className={`text-xs ${
-                                    (msg.sender._id || msg.sender) ===
-                                    currentUserId
+                                    isOwnMessage
                                       ? "text-black/60"
                                       : "text-white/60"
                                   }`}
@@ -431,6 +464,11 @@ function Chat() {
                                     }
                                   )}
                                 </span>
+                                {isOwnMessage && (
+                                  <span className="text-xs">
+                                    {isRead ? "✓✓" : "✓"}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>

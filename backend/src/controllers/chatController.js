@@ -104,3 +104,68 @@ export const sendMessage = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+// Mark messages as read
+export const markMessagesAsRead = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const { messageIds } = req.body;
+
+    // Update messages to mark as read
+    await Message.updateMany(
+      {
+        _id: { $in: messageIds },
+        chatId: chatId,
+        sender: { $ne: req.user.id } // Only mark others' messages as read
+      },
+      {
+        $addToSet: { readBy: req.user.id },
+        $set: { isRead: true }
+      }
+    );
+
+    // Get the updated messages
+    const updatedMessages = await Message.find({
+      _id: { $in: messageIds }
+    });
+
+    // Emit socket event to notify other participants
+    const chat = await Chat.findById(chatId);
+    if (chat) {
+      const otherParticipants = chat.participants.filter(
+        participant => participant.toString() !== req.user.id
+      );
+
+      otherParticipants.forEach(participantId => {
+        getIO().to(participantId.toString()).emit("messagesRead", {
+          chatId,
+          messageIds,
+          readBy: req.user.id
+        });
+      });
+    }
+
+    res.json({ message: "Messages marked as read", updatedMessages });
+  } catch (err) {
+    console.error("Mark as read error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get unread message count for a user
+export const getUnreadCount = async (req, res) => {
+  try {
+    const chats = await Chat.find({ participants: req.user.id });
+    const chatIds = chats.map(chat => chat._id);
+
+    const unreadCount = await Message.countDocuments({
+      chatId: { $in: chatIds },
+      sender: { $ne: req.user.id },
+      readBy: { $ne: req.user.id }
+    });
+
+    res.json({ unreadCount });
+  } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};

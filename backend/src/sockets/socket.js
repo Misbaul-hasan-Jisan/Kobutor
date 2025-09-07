@@ -8,8 +8,8 @@ export const initIO = (server) => {
   io = new Server(server, {
     cors: {
       origin: ["http://localhost:5173", "http://localhost:5174"],
-      methods: ["GET", "POST"]
-    }
+      methods: ["GET", "POST"],
+    },
   });
 
   io.on("connection", (socket) => {
@@ -18,7 +18,10 @@ export const initIO = (server) => {
     // Authenticate socket connection
     socket.on("authenticate", (token) => {
       try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || "secretkey");
+        const decoded = jwt.verify(
+          token,
+          process.env.JWT_SECRET || "secretkey"
+        );
         socket.userId = decoded.id;
         socket.join(decoded.id); // Join user's personal room
         console.log(`User ${decoded.id} authenticated on socket`);
@@ -34,21 +37,31 @@ export const initIO = (server) => {
 
     socket.on("sendMessage", (messageData) => {
       io.to(messageData.chatId).emit("receiveMessage", messageData);
-      
+
       // Notify other participant if they're not in the chat
       const otherParticipants = messageData.participants?.filter(
-        p => p !== socket.userId
+        (p) => p !== socket.userId
       );
-      
+
       if (otherParticipants) {
-        otherParticipants.forEach(participantId => {
+        otherParticipants.forEach((participantId) => {
           io.to(participantId).emit("newMessageNotification", {
             chatId: messageData.chatId,
             message: messageData.text,
-            sender: messageData.sender
+            sender: messageData.sender,
           });
         });
       }
+    });
+    socket.on("markAsRead", (data) => {
+      const { chatId, messageIds } = data;
+
+      // Notify other participants in the chat
+      socket.to(chatId).emit("messagesRead", {
+        chatId,
+        messageIds,
+        readBy: socket.userId,
+      });
     });
 
     socket.on("typing", (chatId) => {
@@ -63,7 +76,7 @@ export const initIO = (server) => {
       socket.to(data.chatId).emit("messagesRead", {
         chatId: data.chatId,
         readerId: socket.userId,
-        messageIds: data.messageIds
+        messageIds: data.messageIds,
       });
     });
 

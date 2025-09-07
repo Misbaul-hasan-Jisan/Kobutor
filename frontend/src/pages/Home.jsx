@@ -1,9 +1,12 @@
 import { useState, useEffect } from 'react';
+import AnimatedSky from '../components/AnimatedSky';
 import background from '../assets/homebg.png'; // Your landscape image
 import backgroundDark from '../assets/homebg-dark.png'; // You'll need a dark version
 import Header from '../components/header';
 import Footer from '../components/Footer';
 import DarkButton from '../components/darkbutton';
+
+
 
 function Home() {
   const [isDark, setIsDark] = useState(false);
@@ -25,7 +28,7 @@ function Home() {
       >
         {/* Header */}
         <Header />
-
+        <AnimatedSky />
         {/* Dark Mode Toggle Button */}
         <DarkButton isDark={isDark} setIsDark={setIsDark} />
 
@@ -43,8 +46,8 @@ function Home() {
           </button>
           {/* Options */}
           <div className="flex gap-4 mt-10">
-            <button className="bg-transparent  text-black dark:text-white px-4 py-2 rounded hover:bg-white/10 border border-white/30 dark:border-gray-600">Chat</button>
-            <button className="bg-transparent  text-black dark:text-white px-4 py-2 rounded hover:bg-white/10 border border-white/30 dark:border-gray-600">Hunt</button>
+            <button className="bg-transparent  text-black dark:text-white px-4 py-2 rounded hover:bg-white/10 border border-white/30 dark:border-gray-600" onClick={() => window.location.href = '/chat'}>Chat</button>
+            <button className="bg-transparent  text-black dark:text-white px-4 py-2 rounded hover:bg-white/10 border border-white/30 dark:border-gray-600" onClick={() => window.location.href = '/hunt'}>Hunt</button>
             <select className="bg-white/20 px-4 py-2 rounded text-black dark:bg-gray-700 dark:text-white">
               <option>Bangladesh</option>
               <option>Global</option>

@@ -54,6 +54,9 @@ const LoginPage = () => {
       // ✅ Store token and user separately
       localStorage.setItem("kobutor_token", data.token);
       localStorage.setItem("kobutor_user", JSON.stringify(data.user));
+      if (data.user && data.user.username) {
+        localStorage.setItem("kobutor_username", data.user.username);
+      }
 
       navigate("/release");
     } catch (err) {

@@ -50,8 +50,8 @@ const ImagePigeon = ({ color, onClick, isCaught }) => {
   );
 };
 
-// Message popup component (unchanged)
-const MessagePopup = ({ message, onClose, color }) => {
+// Updated Message popup component with chat option
+const MessagePopup = ({ message, pigeon, onRelease, onChat, color }) => {
   const bgColor =
     color === "white"
       ? "bg-gray-100"
@@ -72,7 +72,7 @@ const MessagePopup = ({ message, onClose, color }) => {
         className={`${bgColor} ${textColor} rounded-xl p-6 max-w-md mx-4 relative`}
       >
         <button
-          onClick={onClose}
+          onClick={onRelease}
           className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
         >
           ✕
@@ -81,12 +81,20 @@ const MessagePopup = ({ message, onClose, color }) => {
         <div className="p-4 rounded-lg bg-white/20">
           <p className="italic">"{message}"</p>
         </div>
-        <button
-          onClick={onClose}
-          className="mt-6 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-        >
-          Release back to sky
-        </button>
+        <div className="flex gap-3 mt-6">
+          <button
+            onClick={onRelease}
+            className="flex-1 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+          >
+            Release back to sky
+          </button>
+          <button
+            onClick={onChat}
+            className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            Start Chatting
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -95,7 +103,7 @@ const MessagePopup = ({ message, onClose, color }) => {
 function Hunt() {
   const [pigeons, setPigeons] = useState([]);
   const [isDark, setIsDark] = useState(false);
-  const [selectedMessage, setSelectedMessage] = useState(null);
+  const [selectedPigeon, setSelectedPigeon] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [huntLocation, setHuntLocation] = useState("Bangladesh");
   const navigate = useNavigate();
@@ -174,17 +182,17 @@ function Hunt() {
 
       const data = await res.json();
       if (res.ok) {
+        // Store the caught pigeon data to show in popup
+        const caughtPigeon = pigeons.find(p => p.id === id);
+        setSelectedPigeon({
+          ...caughtPigeon,
+          chatId: data.chatId // Store the chatId for later navigation
+        });
+        
         // Visual feedback: mark as caught (so image fades/zooms)
         setPigeons((prev) =>
           prev.map((p) => (p.id === id ? { ...p, isCaught: true } : p))
         );
-        // short delay to let animation play, then remove and navigate
-        setTimeout(() => {
-          setPigeons((prev) => prev.filter((p) => p.id !== id));
-          if (data.chatId) {
-            navigate(`/chat/${data.chatId}`);
-          }
-        }, 500);
       } else {
         console.error(data.message);
       }
@@ -193,13 +201,25 @@ function Hunt() {
     }
   };
 
-  const closeMessage = () => {
-    setSelectedMessage(null);
-    if (selectedMessage) {
-      setTimeout(() => {
-        setPigeons((prev) => prev.filter((p) => p.id !== selectedMessage.id));
-      }, 500);
+  const handleReleasePigeon = () => {
+    // Reset the caught state to return the pigeon to the sky
+    if (selectedPigeon) {
+      setPigeons((prev) =>
+        prev.map((p) => 
+          p.id === selectedPigeon.id ? { ...p, isCaught: false } : p
+        )
+      );
     }
+    setSelectedPigeon(null);
+  };
+
+  const handleStartChat = () => {
+    if (selectedPigeon && selectedPigeon.chatId) {
+      // Remove the pigeon from the sky since we're keeping it for chat
+      setPigeons((prev) => prev.filter((p) => p.id !== selectedPigeon.id));
+      navigate(`/chat/${selectedPigeon.chatId}`);
+    }
+    setSelectedPigeon(null);
   };
 
   const refreshPigeons = async () => {
@@ -335,12 +355,14 @@ function Hunt() {
         )}
       </div>
 
-      {/* Message popup */}
-      {selectedMessage && (
+      {/* Message popup - shown when a pigeon is caught */}
+      {selectedPigeon && (
         <MessagePopup
-          message={selectedMessage.content}
-          onClose={closeMessage}
-          color={selectedMessage.color}
+          message={selectedPigeon.content}
+          pigeon={selectedPigeon}
+          onRelease={handleReleasePigeon}
+          onChat={handleStartChat}
+          color={selectedPigeon.color}
         />
       )}
 

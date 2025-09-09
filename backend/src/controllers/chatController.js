@@ -6,12 +6,10 @@ import { getIO } from "../sockets/socket.js";
 // Get all chats for logged-in user
 export const getUserChats = async (req, res) => {
   try {
-    const chats = await Chat.find({
-      participants: req.user.id,
-      "deletedBy.userId": { $ne: req.user.id }
-    })
-    .sort({ lastMessageAt: -1 })
-    .populate("participants", "username email");
+    // Use the new static method to find active chats
+    const chats = await Chat.findActiveChats(req.user.id)
+      .sort({ lastMessageAt: -1 })
+      .populate("participants", "username email");
 
     res.json(chats);
   } catch (err) {
@@ -129,11 +127,11 @@ export const sendMessage = async (req, res) => {
     });
 
     // Update chat with last message info
-    await Chat.findByIdAndUpdate(chatId, {
+     await Chat.findByIdAndUpdate(chatId, {
       lastMessage: text.trim().substring(0, 100) + (text.length > 100 ? '...' : ''),
       lastMessageAt: new Date(),
+      $inc: { messageCount: 1 } // Increment message count
     });
-
     // Populate the sender info before emitting
     const populatedMessage = await Message.findById(message._id)
       .populate("sender", "username email");

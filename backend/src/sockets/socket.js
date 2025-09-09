@@ -7,7 +7,11 @@ let io;
 export const initIO = (server) => {
   io = new Server(server, {
     cors: {
-      origin: ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"],
+      origin: [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "http://localhost:5175",
+      ],
       methods: ["GET", "POST"],
     },
   });
@@ -33,6 +37,16 @@ export const initIO = (server) => {
     socket.on("joinChat", (chatId) => {
       socket.join(chatId);
       console.log(`User joined chat: ${chatId}`);
+    });
+    socket.on("messageReaction", (data) => {
+      const { chatId, messageId, reactions } = data;
+
+      // Broadcast reaction update to all users in the chat
+      socket.to(chatId).emit("messageReaction", {
+        chatId,
+        messageId,
+        reactions,
+      });
     });
 
     socket.on("sendMessage", (messageData) => {

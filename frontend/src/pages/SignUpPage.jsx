@@ -29,40 +29,42 @@ const SignupPage = () => {
     document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
 
-  const handleSignup = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
+ // In your handleSignup function:
+const handleSignup = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError("");
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      setIsLoading(false);
+  if (password !== confirmPassword) {
+    setError("Passwords do not match");
+    setIsLoading(false);
+    return;
+  }
+
+  try {
+    const response = await fetch("http://localhost:3000/api/auth/signup/kobutor", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, email, password }),
+    });
+
+    if (response.ok) {
+      const userData = await response.json();
+      // ✅ Store user data properly
+      localStorage.setItem("kobutor_user", JSON.stringify(userData.user));
+      localStorage.setItem("kobutor_token", userData.token);
+      navigate("/");
       return;
     }
 
-    try {
-      const response = await fetch("http://localhost:3000/api/auth/signup/kobutor", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password }),
-      });
-
-      if (response.ok) {
-        const userData = await response.json();
-        localStorage.setItem("kobutorUser", JSON.stringify(userData));
-        navigate("/");
-        return;
-      }
-
-      setError("Failed to sign up");
-    } catch (err) {
-      setError("Failed to connect to server");
-      console.error("Signup error:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+    setError("Failed to sign up");
+  } catch (err) {
+    setError("Failed to connect to server");
+    console.error("Signup error:", err);
+  } finally {
+    setIsLoading(false);
+  }
+};
   return (
     <div
       className="w-screen min-h-screen bg-cover bg-center text-white flex flex-col transition-all duration-500"

@@ -98,6 +98,7 @@ function Chat() {
       }
     };
 
+    // In your socket useEffect, update the handleMessageReaction function:
     const handleMessageReaction = (data) => {
       if (selectedChat && data.chatId === selectedChat._id) {
         setMessages((prev) =>
@@ -155,7 +156,7 @@ function Chat() {
       socket.off("messagesRead", handleMessagesRead);
     };
   }, [selectedChat, socket]);
-  
+
   // Fetch chats
   useEffect(() => {
     const fetchChats = async () => {
@@ -246,7 +247,7 @@ function Chat() {
       console.error("Error marking messages as read:", error);
     }
   };
-  
+
   // Scroll to bottom
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -300,8 +301,100 @@ function Chat() {
     }
   };
 
-  // Add reaction to message
-  const handleAddReaction = async (messageId, emoji) => {
+  // Update handleAddReaction:
+  // const handleAddReaction = async (messageId, emoji) => {
+  //   try {
+  //     const token = localStorage.getItem("kobutor_token");
+  //     const res = await fetch(
+  //       `http://localhost:3000/api/chats/${selectedChat._id}/messages/${messageId}/react`,
+  //       {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //         body: JSON.stringify({ emoji }),
+  //       }
+  //     );
+
+  //     if (res.ok) {
+  //       const updatedData = await res.json();
+  //       setMessages((prev) =>
+  //         prev.map((msg) =>
+  //           msg._id === messageId
+  //             ? { ...msg, reactions: updatedData.reactions }
+  //             : msg
+  //         )
+  //       );
+
+  //       socket.emit("messageReaction", {
+  //         chatId: selectedChat._id,
+  //         messageId,
+  //         reactions: updatedData.reactions,
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("Error adding reaction:", error);
+  //   }
+  //   setShowReactionPicker(null);
+  // };
+
+  // // Update handleRemoveReaction:
+  // const handleRemoveReaction = async (messageId, emoji) => {
+  //   try {
+  //     const token = localStorage.getItem("kobutor_token");
+  //     const res = await fetch(
+  //       `http://localhost:3000/api/chats/${selectedChat._id}/messages/${messageId}/react`,
+  //       {
+  //         method: "DELETE",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //           Authorization: `Bearer ${token}`,
+  //         },
+  //         body: JSON.stringify({ emoji }),
+  //       }
+  //     );
+
+  //     if (res.ok) {
+  //       const updatedData = await res.json();
+  //       setMessages((prev) =>
+  //         prev.map((msg) =>
+  //           msg._id === messageId
+  //             ? { ...msg, reactions: updatedData.reactions }
+  //             : msg
+  //         )
+  //       );
+
+  //       socket.emit("messageReaction", {
+  //         chatId: selectedChat._id,
+  //         messageId,
+  //         reactions: updatedData.reactions,
+  //       });
+  //     }
+  //   } catch (error) {
+  //     console.error("Error removing reaction:", error);
+  //   }
+  // };
+  // Toggle reaction (add or remove)
+
+  const handleToggleReaction = async (messageId, emoji) => {
+    const message = messages.find((m) => m._id === messageId);
+    if (!message || !message.reactions) return;
+
+    // Check if user already reacted (handle both old and new formats)
+    let hasReacted = false;
+    const reaction = message.reactions[emoji];
+
+    if (reaction) {
+      if (Array.isArray(reaction)) {
+        // Old format: reaction is an array of user IDs
+        hasReacted = reaction.includes(currentUserId);
+      } else if (reaction.users) {
+        // New format: reaction is an object with users array
+        hasReacted = reaction.users.includes(currentUserId);
+      }
+    }
+
     try {
       const token = localStorage.getItem("kobutor_token");
       const res = await fetch(
@@ -317,73 +410,26 @@ function Chat() {
       );
 
       if (res.ok) {
-        const updatedMessage = await res.json();
+        const updatedData = await res.json();
         setMessages((prev) =>
           prev.map((msg) =>
-            msg._id === messageId ? { ...msg, reactions: updatedMessage.reactions } : msg
+            msg._id === messageId
+              ? { ...msg, reactions: updatedData.reactions }
+              : msg
           )
         );
-        
+
         // Emit socket event to notify other users
         socket.emit("messageReaction", {
           chatId: selectedChat._id,
           messageId,
-          reactions: updatedMessage.reactions
+          reactions: updatedData.reactions,
         });
       }
     } catch (error) {
-      console.error("Error adding reaction:", error);
+      console.error("Error toggling reaction:", error);
     }
     setShowReactionPicker(null);
-  };
-
-  // Remove reaction from message
-  const handleRemoveReaction = async (messageId, emoji) => {
-    try {
-      const token = localStorage.getItem("kobutor_token");
-      const res = await fetch(
-        `http://localhost:3000/api/chats/${selectedChat._id}/messages/${messageId}/react`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ emoji }),
-        }
-      );
-
-      if (res.ok) {
-        const updatedMessage = await res.json();
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg._id === messageId ? { ...msg, reactions: updatedMessage.reactions } : msg
-          )
-        );
-        
-        // Emit socket event to notify other users
-        socket.emit("messageReaction", {
-          chatId: selectedChat._id,
-          messageId,
-          reactions: updatedMessage.reactions
-        });
-      }
-    } catch (error) {
-      console.error("Error removing reaction:", error);
-    }
-  };
-
-  // Toggle reaction (add or remove)
-  const handleToggleReaction = async (messageId, emoji) => {
-    const message = messages.find(m => m._id === messageId);
-    const hasReacted = message.reactions && message.reactions[emoji] && 
-                      message.reactions[emoji].includes(currentUserId);
-    
-    if (hasReacted) {
-      handleRemoveReaction(messageId, emoji);
-    } else {
-      handleAddReaction(messageId, emoji);
-    }
   };
 
   // Delete chat
@@ -562,30 +608,58 @@ function Chat() {
                               } group-hover:scale-105`}
                             >
                               <p className="mb-1">{msg.text}</p>
-                              
+
                               {/* Reactions */}
-                              {msg.reactions && Object.keys(msg.reactions).length > 0 && (
-                                <div className="flex flex-wrap gap-1 mb-1">
-                                  {Object.entries(msg.reactions).map(([emoji, users]) => {
-                                    const userReacted = users.includes(currentUserId);
-                                    return (
-                                      <button
-                                        key={emoji}
-                                        onClick={() => handleToggleReaction(msg._id, emoji)}
-                                        className={`px-1 rounded text-xs transition-all ${
-                                          userReacted 
-                                            ? "bg-yellow-400 text-black" 
-                                            : "bg-black/20 hover:bg-black/30"
-                                        }`}
-                                        title={users.join(', ')}
-                                      >
-                                        {emoji} {users.length > 1 ? users.length : ''}
-                                      </button>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                              
+                              {msg.reactions &&
+                                Object.keys(msg.reactions).length > 0 && (
+                                  <div className="flex flex-wrap gap-1 mb-1">
+                                    {Object.entries(msg.reactions).map(
+                                      ([emoji, reactionData]) => {
+                                        // Check if reactionData is an array (old format) or object (new format)
+                                        const usersArray = Array.isArray(
+                                          reactionData
+                                        )
+                                          ? reactionData
+                                          : reactionData.users || [];
+
+                                        const userReacted =
+                                          usersArray.includes(currentUserId);
+                                        const reactionCount = Array.isArray(
+                                          reactionData
+                                        )
+                                          ? reactionData.length
+                                          : reactionData.count ||
+                                            usersArray.length;
+
+                                        return (
+                                          <button
+                                            key={emoji}
+                                            onClick={() =>
+                                              handleToggleReaction(
+                                                msg._id,
+                                                emoji
+                                              )
+                                            }
+                                            className={`px-1 rounded text-xs transition-all ${
+                                              userReacted
+                                                ? "bg-yellow-400 text-black"
+                                                : "bg-black/20 hover:bg-black/30"
+                                            }`}
+                                            title={`${reactionCount} reaction${
+                                              reactionCount !== 1 ? "s" : ""
+                                            }`}
+                                          >
+                                            {emoji}{" "}
+                                            {reactionCount > 1
+                                              ? reactionCount
+                                              : ""}
+                                          </button>
+                                        );
+                                      }
+                                    )}
+                                  </div>
+                                )}
+
                               <div className="flex justify-between items-center mt-1">
                                 <span
                                   className={`text-xs ${
@@ -611,7 +685,11 @@ function Chat() {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      setShowReactionPicker(showReactionPicker === msg._id ? null : msg._id);
+                                      setShowReactionPicker(
+                                        showReactionPicker === msg._id
+                                          ? null
+                                          : msg._id
+                                      );
                                     }}
                                     className="opacity-0 group-hover:opacity-50 hover:opacity-100 transition-opacity text-xs"
                                   >
@@ -620,7 +698,7 @@ function Chat() {
                                 </div>
                               </div>
                             </div>
-                            
+
                             {/* Reaction Picker */}
                             {showReactionPicker === msg._id && (
                               <div className="absolute bg-black/90 rounded-full p-1 flex space-x-1 z-10 mt-8 shadow-lg border border-white/20">
@@ -694,7 +772,9 @@ function Chat() {
                     <h3 className="text-xl mb-2 font-semibold">
                       Select a chat to start messaging
                     </h3>
-                    <p className="opacity-75">Connect with fellow pigeon enthusiasts</p>
+                    <p className="opacity-75">
+                      Connect with fellow pigeon enthusiasts
+                    </p>
                   </div>
                 </div>
               )}
@@ -733,7 +813,7 @@ function Chat() {
       )}
 
       <Footer />
-      
+
       <style>{`
         @keyframes float {
           0% { transform: translateY(0) rotate(0deg); }

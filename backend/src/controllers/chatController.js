@@ -62,45 +62,135 @@ export const deleteChat = async (req, res) => {
 // Get messages for a specific chat
 export const getChatMessages = async (req, res) => {
   try {
-    const messages = await Message.find({ chatId: req.params.chatId })
-      .sort({ createdAt: 1 })
-      .populate("sender", "username");
+    const { chatId } = req.params;
+    const userId = req.user.id;
 
-    res.json(messages);
+    // Check if user is participant in the chat
+    const chat = await Chat.findById(chatId);
+    if (!chat || !chat.participants.includes(userId)) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const messages = await Message.find({ chatId: chatId })
+      .sort({ createdAt: 1 })
+      .populate("sender", "username")
+      .lean(); // Use lean() for better performance
+
+    // Convert Map reactions to objects for all messages
+    const messagesWithReactions = messages.map(message => ({
+      ...message,
+      reactions: message.reactions instanceof Map 
+        ? Object.fromEntries(message.reactions) 
+        : message.reactions || {}
+    }));
+
+    res.json(messagesWithReactions);
   } catch (err) {
+    console.error("Get messages error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
 
 // Send a message
+// backend/controllers/chatController.js
 export const sendMessage = async (req, res) => {
   try {
     const { text } = req.body;
     const { chatId } = req.params;
+    const userId = req.user.id;
 
+    // Validate input
+    if (!text || !text.trim()) {
+      return res.status(400).json({ message: "Message text is required" });
+    }
+
+    if (text.length > 1000) {
+      return res.status(400).json({ message: "Message too long (max 1000 characters)" });
+    }
+
+    // Check if chat exists and user is participant
+    const chat = await Chat.findById(chatId);
+    if (!chat) {
+      return res.status(404).json({ message: "Chat not found" });
+    }
+
+    if (!chat.participants.includes(userId)) {
+      return res.status(403).json({ message: "Not authorized to send message in this chat" });
+    }
+
+    // Create message with initialized reactions map
     const message = await Message.create({
       chatId,
-      sender: req.user.id,
-      text,
-      readBy: [req.user.id],
+      sender: userId,
+      text: text.trim(),
+      readBy: [userId],
+      isRead: false,
+      reactions: new Map() // Initialize empty reactions map
     });
 
+    // Update chat with last message info
     await Chat.findByIdAndUpdate(chatId, {
-      lastMessage: text,
+      lastMessage: text.trim().substring(0, 100) + (text.length > 100 ? '...' : ''),
       lastMessageAt: new Date(),
     });
 
+    // Populate the sender info before emitting
+    const populatedMessage = await Message.findById(message._id)
+      .populate("sender", "username email");
+
+    // Convert Map to object for response - SAFELY
+    let reactionsObject = {};
+    if (populatedMessage.reactions instanceof Map) {
+      reactionsObject = Object.fromEntries(populatedMessage.reactions);
+    } else if (populatedMessage.reactions && typeof populatedMessage.reactions === 'object') {
+      reactionsObject = populatedMessage.reactions;
+    }
+
+    const messageForResponse = {
+      _id: populatedMessage._id,
+      chatId: populatedMessage.chatId,
+      sender: populatedMessage.sender,
+      text: populatedMessage.text,
+      readBy: populatedMessage.readBy,
+      isRead: populatedMessage.isRead,
+      createdAt: populatedMessage.createdAt,
+      updatedAt: populatedMessage.updatedAt,
+      reactions: reactionsObject
+    };
+
     // Emit to all users in this chat room
     getIO().to(chatId).emit("receiveMessage", {
-      _id: message._id,
+      _id: messageForResponse._id,
       chatId,
-      sender: req.user.id,
-      text,
-      createdAt: message.createdAt,
+      sender: messageForResponse.sender._id,
+      text: messageForResponse.text,
+      createdAt: messageForResponse.createdAt,
+      reactions: messageForResponse.reactions,
+      isRead: messageForResponse.isRead
     });
 
-    res.status(201).json(message);
+    // Send notification to other participants
+    const otherParticipants = chat.participants.filter(
+      participant => participant.toString() !== userId.toString()
+    );
+
+    otherParticipants.forEach(participantId => {
+      getIO().to(participantId.toString()).emit("newMessageNotification", {
+        chatId,
+        message: text.trim().substring(0, 50) + (text.length > 50 ? '...' : ''),
+        sender: messageForResponse.sender.username,
+        timestamp: new Date()
+      });
+    });
+
+    res.status(201).json(messageForResponse);
   } catch (err) {
+    console.error("Send message error:", err);
+    
+    if (err.name === 'CastError') {
+      return res.status(400).json({ message: "Invalid chat ID" });
+    }
+    
     res.status(500).json({ message: "Server error" });
   }
 };
@@ -166,6 +256,218 @@ export const getUnreadCount = async (req, res) => {
 
     res.json({ unreadCount });
   } catch (err) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const addReaction = async (req, res) => {
+  try {
+    const { chatId, messageId } = req.params;
+    const { emoji } = req.body;
+    const userId = req.user.id;
+
+    // Validate emoji
+    if (!emoji || emoji.length > 4) {
+      return res.status(400).json({ message: "Invalid emoji" });
+    }
+
+    const message = await Message.findOne({
+      _id: messageId,
+      chatId: chatId
+    });
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    // Initialize reactions map if it doesn't exist
+    if (!message.reactions) {
+      message.reactions = new Map();
+    }
+
+    // Check if user already reacted with this emoji
+    const reaction = message.reactions.get(emoji);
+    if (reaction && reaction.users.includes(userId)) {
+      return res.status(400).json({ message: "Already reacted with this emoji" });
+    }
+
+    // Add reaction
+    if (reaction) {
+      reaction.users.push(userId);
+      reaction.count += 1;
+    } else {
+      message.reactions.set(emoji, {
+        users: [userId],
+        count: 1
+      });
+    }
+
+    await message.save();
+
+    // Populate user info for the reaction
+    const populatedMessage = await Message.findById(messageId)
+      .populate("reactions.$*.users", "username");
+
+    // Emit socket event
+    getIO().to(chatId).emit("messageReaction", {
+      chatId,
+      messageId,
+      reactions: Object.fromEntries(populatedMessage.reactions)
+    });
+
+    res.json({ 
+      message: "Reaction added", 
+      reactions: Object.fromEntries(populatedMessage.reactions)
+    });
+  } catch (err) {
+    console.error("Add reaction error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Remove reaction from message
+export const removeReaction = async (req, res) => {
+  try {
+    const { chatId, messageId } = req.params;
+    const { emoji } = req.body;
+    const userId = req.user.id;
+
+    const message = await Message.findOne({
+      _id: messageId,
+      chatId: chatId
+    });
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    if (!message.reactions || !message.reactions.has(emoji)) {
+      return res.status(400).json({ message: "No such reaction" });
+    }
+
+    const reaction = message.reactions.get(emoji);
+    const userIndex = reaction.users.indexOf(userId);
+
+    if (userIndex === -1) {
+      return res.status(400).json({ message: "User didn't react with this emoji" });
+    }
+
+    // Remove user from reaction
+    reaction.users.splice(userIndex, 1);
+    reaction.count -= 1;
+
+    // Remove the reaction entry if no users left
+    if (reaction.users.length === 0) {
+      message.reactions.delete(emoji);
+    }
+
+    await message.save();
+
+    // Emit socket event
+    getIO().to(chatId).emit("messageReaction", {
+      chatId,
+      messageId,
+      reactions: Object.fromEntries(message.reactions)
+    });
+
+    res.json({ 
+      message: "Reaction removed", 
+      reactions: Object.fromEntries(message.reactions)
+    });
+  } catch (err) {
+    console.error("Remove reaction error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Toggle reaction (add or remove)
+export const toggleReaction = async (req, res) => {
+  try {
+    const { chatId, messageId } = req.params;
+    const { emoji } = req.body;
+    const userId = req.user.id;
+
+    const message = await Message.findOne({
+      _id: messageId,
+      chatId: chatId
+    });
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    // Initialize reactions if needed
+    if (!message.reactions) {
+      message.reactions = new Map();
+    }
+
+    const reaction = message.reactions.get(emoji);
+    const hasReacted = reaction && reaction.users.includes(userId);
+
+    if (hasReacted) {
+      // Remove reaction
+      const userIndex = reaction.users.indexOf(userId);
+      reaction.users.splice(userIndex, 1);
+      reaction.count -= 1;
+
+      if (reaction.users.length === 0) {
+        message.reactions.delete(emoji);
+      }
+    } else {
+      // Add reaction
+      if (reaction) {
+        reaction.users.push(userId);
+        reaction.count += 1;
+      } else {
+        message.reactions.set(emoji, {
+          users: [userId],
+          count: 1
+        });
+      }
+    }
+
+    await message.save();
+
+    // Populate user info
+    const populatedMessage = await Message.findById(messageId)
+      .populate("reactions.$*.users", "username");
+
+    // Emit socket event
+    getIO().to(chatId).emit("messageReaction", {
+      chatId,
+      messageId,
+      reactions: Object.fromEntries(populatedMessage.reactions)
+    });
+
+    res.json({ 
+      message: hasReacted ? "Reaction removed" : "Reaction added",
+      reactions: Object.fromEntries(populatedMessage.reactions)
+    });
+  } catch (err) {
+    console.error("Toggle reaction error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get message reactions
+export const getMessageReactions = async (req, res) => {
+  try {
+    const { chatId, messageId } = req.params;
+
+    const message = await Message.findOne({
+      _id: messageId,
+      chatId: chatId
+    }).populate("reactions.$*.users", "username");
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    res.json({ 
+      reactions: Object.fromEntries(message.reactions || new Map())
+    });
+  } catch (err) {
+    console.error("Get reactions error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

@@ -29,43 +29,41 @@ const LoginPage = () => {
     document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
+ // In your handleLogin function:
+const handleLogin = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError("");
 
-    try {
-      const response = await fetch("http://localhost:3000/api/auth/login/kobutor", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: email.trim(),
-          password: password.toString(), // ensure it's a string
-        }),
-      });
+  try {
+    const response = await fetch("http://localhost:3000/api/auth/login/kobutor", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: email.trim(),
+        password: password.toString(),
+      }),
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (!response.ok) {
-        setError(data.message || "Invalid email or password");
-        return;
-      }
-
-      // ✅ Store token and user separately
-      localStorage.setItem("kobutor_token", data.token);
-      localStorage.setItem("kobutor_user", JSON.stringify(data.user));
-      if (data.user && data.user.username) {
-        localStorage.setItem("kobutor_username", data.user.username);
-      }
-
-      navigate("/release");
-    } catch (err) {
-      console.error("Login error:", err);
-      setError("Failed to connect to server");
-    } finally {
-      setIsLoading(false);
+    if (!response.ok) {
+      setError(data.message || "Invalid email or password");
+      return;
     }
-  };
+
+    // ✅ Store token and user properly
+    localStorage.setItem("kobutor_token", data.token);
+    localStorage.setItem("kobutor_user", JSON.stringify(data.user)); // Store as JSON string
+    
+    navigate("/release");
+  } catch (err) {
+    console.error("Login error:", err);
+    setError("Failed to connect to server");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div

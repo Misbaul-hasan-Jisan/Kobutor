@@ -99,14 +99,8 @@ function Hunt() {
   // Location options
   const locationOptions = [
     { value: "Random", description: "Pigeons from anywhere" },
-    { value: "Dhaka", description: "Capital city pigeons" },
-    { value: "Chittagong", description: "Port city pigeons" },
-    { value: "Sylhet", description: "Tea garden pigeons" },
-    { value: "Rajshahi", description: "Mango region pigeons" },
-    { value: "Khulna", description: "Sundarbans area pigeons" },
-    { value: "Barisal", description: "River region pigeons" },
-    { value: "Rangpur", description: "Northern region pigeons" },
-    { value: "Mymensingh", description: "Agricultural area pigeons" }
+    { value: "Bangladesh", description: "Inside country pigeons" },
+    { value: "International", description: "Outside country pigeons" },
   ];
 
   // Apply theme

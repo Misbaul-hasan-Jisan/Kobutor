@@ -127,10 +127,23 @@ function Chat() {
   }, [selectedChat, socket]);
 
   useEffect(() => {
-    if (selectedChat && messages.length > 0) {
-      markMessagesAsRead(messages);
-    }
-  }, [selectedChat, messages]);
+  if (!selectedChat || messages.length === 0) return;
+
+  const unreadMessages = messages.filter(
+    (msg) =>
+      (msg.sender._id || msg.sender) !== currentUserId &&
+      !msg.readBy?.includes(currentUserId)
+  );
+
+  if (unreadMessages.length === 0) return;
+
+  const timer = setTimeout(() => {
+    markMessagesAsRead(unreadMessages);
+  }, 500); // wait 500ms before sending
+
+  return () => clearTimeout(timer);
+}, [messages, selectedChat, currentUserId]);
+
 
   // Add this socket listener for read receipts
   useEffect(() => {

@@ -78,13 +78,21 @@ export const initIO = (server) => {
       });
     });
 
-    socket.on("typing", (chatId) => {
-      socket.to(chatId).emit("typing", chatId);
-    });
+socket.on("typing", (data) => {
+  socket.to(data.chatId).emit("typing", {
+    chatId: data.chatId,
+    userId: socket.userId,
+  });
+});
 
-    socket.on("stopTyping", (chatId) => {
-      socket.to(chatId).emit("stopTyping", chatId);
-    });
+socket.on("stopTyping", (data) => {
+  socket.to(data.chatId).emit("stopTyping", {
+    chatId: data.chatId,
+    userId: socket.userId,
+  });
+});
+
+
 
     socket.on("markAsRead", (data) => {
       socket.to(data.chatId).emit("messagesRead", {

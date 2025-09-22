@@ -97,11 +97,11 @@ function Hunt() {
   const navigate = useNavigate();
 
   // Location options
-  const locationOptions = [
-    { value: "Random", description: "Pigeons from anywhere" },
-    { value: "Bangladesh", description: "Inside country pigeons" },
-    { value: "International", description: "Outside country pigeons" },
-  ];
+const locationOptions = [
+  { value: "Random", description: "Pigeons from anywhere" },
+  { value: "Bangladesh", description: "Inside country pigeons" },
+  { value: "Global", description: "Outside country pigeons" },
+];
 
   // Apply theme
   useEffect(() => {

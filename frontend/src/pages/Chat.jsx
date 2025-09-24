@@ -26,27 +26,97 @@ const REACTION_GROUPS = [
   ["🙏", "🤔", "🤯", "🥳", "💩"]
 ];
 
-// Theme options - background gradients only
+// Expanded Theme options with chat box colors
 const CHAT_THEMES = [
   { 
     id: "default", 
-    name: "Default", 
-    background: "bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900"
+    name: "Classic", 
+    background: "bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900",
+    chatBox: "from-yellow-400 to-orange-500",
+    otherChatBox: "from-blue-400 to-purple-500",
+    header: "from-yellow-400/10 to-transparent",
+    border: "border-yellow-400/30"
   },
   { 
     id: "sunset", 
     name: "Sunset", 
-    background: "bg-gradient-to-br from-orange-400 via-red-500 to-purple-600"
+    background: "bg-gradient-to-br from-orange-400 via-red-500 to-purple-600",
+    chatBox: "from-orange-300 to-red-400",
+    otherChatBox: "from-purple-400 to-pink-500",
+    header: "from-orange-400/20 to-transparent",
+    border: "border-orange-400/30"
   },
   { 
     id: "ocean", 
     name: "Ocean", 
-    background: "bg-gradient-to-br from-blue-400 via-teal-500 to-green-600"
+    background: "bg-gradient-to-br from-blue-400 via-teal-500 to-green-600",
+    chatBox: "from-cyan-300 to-blue-400",
+    otherChatBox: "from-teal-400 to-green-500",
+    header: "from-cyan-400/20 to-transparent",
+    border: "border-cyan-400/30"
   },
   { 
     id: "forest", 
     name: "Forest", 
-    background: "bg-gradient-to-br from-green-500 via-emerald-600 to-teal-700"
+    background: "bg-gradient-to-br from-green-500 via-emerald-600 to-teal-700",
+    chatBox: "from-emerald-300 to-green-400",
+    otherChatBox: "from-teal-400 to-cyan-500",
+    header: "from-emerald-400/20 to-transparent",
+    border: "border-emerald-400/30"
+  },
+  { 
+    id: "berry", 
+    name: "Berry", 
+    background: "bg-gradient-to-br from-pink-500 via-purple-600 to-indigo-700",
+    chatBox: "from-pink-300 to-rose-400",
+    otherChatBox: "from-purple-400 to-indigo-500",
+    header: "from-pink-400/20 to-transparent",
+    border: "border-pink-400/30"
+  },
+  { 
+    id: "fire", 
+    name: "Fire", 
+    background: "bg-gradient-to-br from-red-500 via-orange-600 to-yellow-600",
+    chatBox: "from-red-300 to-orange-400",
+    otherChatBox: "from-orange-400 to-yellow-500",
+    header: "from-red-400/20 to-transparent",
+    border: "border-red-400/30"
+  },
+  { 
+    id: "ice", 
+    name: "Ice", 
+    background: "bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600",
+    chatBox: "from-cyan-200 to-blue-300",
+    otherChatBox: "from-blue-300 to-indigo-400",
+    header: "from-cyan-400/20 to-transparent",
+    border: "border-cyan-400/30"
+  },
+  { 
+    id: "lavender", 
+    name: "Lavender", 
+    background: "bg-gradient-to-br from-purple-400 via-violet-500 to-purple-700",
+    chatBox: "from-violet-300 to-purple-400",
+    otherChatBox: "from-purple-400 to-indigo-500",
+    header: "from-violet-400/20 to-transparent",
+    border: "border-violet-400/30"
+  },
+  { 
+    id: "sunrise", 
+    name: "Sunrise", 
+    background: "bg-gradient-to-br from-yellow-300 via-orange-400 to-pink-500",
+    chatBox: "from-yellow-200 to-orange-300",
+    otherChatBox: "from-orange-300 to-pink-400",
+    header: "from-yellow-400/20 to-transparent",
+    border: "border-yellow-400/30"
+  },
+  { 
+    id: "midnight", 
+    name: "Midnight", 
+    background: "bg-gradient-to-br from-gray-800 via-blue-900 to-purple-900",
+    chatBox: "from-blue-300 to-indigo-400",
+    otherChatBox: "from-indigo-400 to-purple-500",
+    header: "from-blue-400/20 to-transparent",
+    border: "border-blue-400/30"
   }
 ];
 
@@ -140,6 +210,13 @@ function Chat() {
   // Get socket instance
   const socket = getSocket();
 
+  // Get current theme settings
+  const getCurrentTheme = () => {
+    return CHAT_THEMES.find(t => t.id === currentTheme) || CHAT_THEMES[0];
+  };
+
+  const theme = getCurrentTheme();
+
   // Theme effects
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme");
@@ -159,145 +236,11 @@ function Chat() {
     localStorage.setItem("chatTheme", currentTheme);
   }, [isDark, currentTheme]);
 
-  // Socket event listeners with online status
-  useEffect(() => {
-    const handleUserOnline = (userId) => {
-      setOnlineUsers(prev => new Set([...prev, userId]));
-    };
-
-    const handleUserOffline = (userId) => {
-      setOnlineUsers(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(userId);
-        return newSet;
-      });
-    };
-
-    socket.on("userOnline", handleUserOnline);
-    socket.on("userOffline", handleUserOffline);
-
-    return () => {
-      socket.off("userOnline", handleUserOnline);
-      socket.off("userOffline", handleUserOffline);
-    };
-  }, [socket]);
-
-  // Enhanced message receive handler with animations
-  useEffect(() => {
-    const handleReceiveMessage = (message) => {
-      if (selectedChat && message.chatId === selectedChat._id) {
-        setMessages(prev => [...prev, { ...message, animate: true }]);
-        
-        // Clear animation after a delay
-        setTimeout(() => {
-          setMessages(prev => 
-            prev.map(msg => 
-              msg._id === message._id ? { ...msg, animate: false } : msg
-            )
-          );
-        }, 1000);
-      }
-    };
-
-    socket.on("receiveMessage", handleReceiveMessage);
-    return () => socket.off("receiveMessage", handleReceiveMessage);
-  }, [selectedChat, socket]);
-
-  // Existing socket event listeners
-  useEffect(() => {
-    const handleTyping = (data) => {
-      if (selectedChat && data.chatId === selectedChat._id) {
-        setIsTyping(true);
-      }
-    };
-
-    const handleStopTyping = (data) => {
-      if (selectedChat && data.chatId === selectedChat._id) {
-        setIsTyping(false);
-      }
-    };
-
-    const handleChatDeleted = (data) => {
-      if (data.chatId === selectedChat?._id) {
-        setActiveChats((prev) =>
-          prev.filter((chat) => chat._id !== data.chatId)
-        );
-        setSelectedChat(null);
-      }
-    };
-
-    const handleMessageReaction = (data) => {
-      if (selectedChat && data.chatId === selectedChat._id) {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg._id === data.messageId
-              ? { ...msg, reactions: data.reactions }
-              : msg
-          )
-        );
-      }
-    };
-
-    socket.on("typing", handleTyping);
-    socket.on("stopTyping", handleStopTyping);
-    socket.on("chatDeleted", handleChatDeleted);
-    socket.on("messageReaction", handleMessageReaction);
-
-    return () => {
-      socket.off("typing", handleTyping);
-      socket.off("stopTyping", handleStopTyping);
-      socket.off("chatDeleted", handleChatDeleted);
-      socket.off("messageReaction", handleMessageReaction);
-    };
-  }, [selectedChat, socket]);
-
-  // Existing useEffect for read receipts
-  useEffect(() => {
-    const handleMessagesRead = (data) => {
-      if (selectedChat && data.chatId === selectedChat._id) {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            data.messageIds.includes(msg._id)
-              ? {
-                  ...msg,
-                  readBy: [...(msg.readBy || []), data.readBy],
-                  isRead: true,
-                }
-              : msg
-          )
-        );
-      }
-    };
-
-    socket.on("messagesRead", handleMessagesRead);
-    return () => {
-      socket.off("messagesRead", handleMessagesRead);
-    };
-  }, [selectedChat, socket]);
-
-  // Existing mark as read useEffect
-  useEffect(() => {
-    if (!selectedChat || messages.length === 0) return;
-
-    const unreadMessages = messages.filter(
-      (msg) =>
-        (msg.sender._id || msg.sender) !== currentUserId &&
-        !msg.readBy?.includes(currentUserId)
-    );
-
-    if (unreadMessages.length === 0) return;
-
-    const timer = setTimeout(() => {
-      markMessagesAsRead(unreadMessages);
-    }, 500);
-
-    return () => clearTimeout(timer);
-  }, [messages, selectedChat, currentUserId]);
-
-  // Enhanced Message Bubble Component
+  // Enhanced Message Bubble Component with theme colors
   const MessageBubble = ({ message, isOwnMessage, showDate }) => {
     const avatar = generateAvatar(message.sender._id, message.sender.username);
     const isOnline = onlineUsers.has(message.sender._id);
+    const currentTheme = getCurrentTheme();
     
     const bubbleVariants = {
       hidden: { 
@@ -350,8 +293,8 @@ function Chat() {
             whileHover={{ scale: 1.02 }}
             className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-lg relative ${
               isOwnMessage
-                ? "bg-gradient-to-r from-yellow-400 to-orange-500 text-black rounded-br-none"
-                : "bg-gradient-to-r from-blue-400 to-purple-500 text-white rounded-bl-none"
+                ? `bg-gradient-to-r ${currentTheme.chatBox} text-black rounded-br-none`
+                : `bg-gradient-to-r ${currentTheme.otherChatBox} text-white rounded-bl-none`
             }`}
           >
             <p className="mb-1 leading-relaxed">{message.text}</p>
@@ -472,30 +415,7 @@ function Chat() {
     );
   };
 
-  // Pin message function
-  const handlePinMessage = async (messageId) => {
-    try {
-      const token = localStorage.getItem("kobutor_token");
-      const res = await fetch(
-        `http://localhost:3000/api/chats/${selectedChat._id}/messages/${messageId}/pin`,
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (res.ok) {
-        const updatedMessage = await res.json();
-        setPinnedMessages(prev => [...prev.filter(msg => msg._id !== messageId), updatedMessage]);
-      }
-    } catch (error) {
-      console.error("Error pinning message:", error);
-    }
-  };
-
-  // Theme selector component
+  // Theme selector component with improved layout
   const ThemeSelector = () => (
     <AnimatePresence>
       {showThemePicker && (
@@ -503,10 +423,10 @@ function Chat() {
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -10 }}
-          className="absolute top-16 right-4 bg-black/90 backdrop-blur-md rounded-xl p-4 shadow-2xl border border-white/20 z-30"
+          className="absolute top-16 right-4 bg-black/90 backdrop-blur-md rounded-xl p-4 shadow-2xl border border-white/20 z-30 max-w-xs"
         >
-          <h4 className="text-white font-semibold mb-3">Chat Theme</h4>
-          <div className="grid grid-cols-2 gap-2">
+          <h4 className="text-white font-semibold mb-3">Chat Themes</h4>
+          <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
             {CHAT_THEMES.map(theme => (
               <motion.button
                 key={theme.id}
@@ -516,11 +436,15 @@ function Chat() {
                   setCurrentTheme(theme.id);
                   setShowThemePicker(false);
                 }}
-                className={`w-16 h-16 rounded-lg ${theme.background} border-2 ${
-                  currentTheme === theme.id ? 'border-yellow-400' : 'border-white/20'
+                className={`relative w-12 h-12 rounded-lg ${theme.background} border-2 ${
+                  currentTheme === theme.id ? 'border-yellow-400 ring-2 ring-yellow-200' : 'border-white/20'
                 }`}
                 title={theme.name}
-              />
+              >
+                <span className="absolute -top-2 -right-2 text-xs bg-black/50 rounded-full w-4 h-4 flex items-center justify-center">
+                  {currentTheme === theme.id ? '✓' : ''}
+                </span>
+              </motion.button>
             ))}
           </div>
         </motion.div>
@@ -528,13 +452,9 @@ function Chat() {
     </AnimatePresence>
   );
 
-  // Apply selected theme - FIXED: Only returns background gradient
-  const getThemeClass = () => {
-    const theme = CHAT_THEMES.find(t => t.id === currentTheme);
-    return theme ? theme.background : "bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900";
-  };
+  // ... (rest of your existing functions remain the same - selectChat, markMessagesAsRead, handleTyping, etc.)
 
-  // Your existing functions
+  // Your existing functions (keeping them as is)
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
     const today = new Date();
@@ -770,6 +690,144 @@ function Chat() {
     }
   }, [socket]);
 
+  // Socket event listeners with online status
+  useEffect(() => {
+    const handleUserOnline = (userId) => {
+      setOnlineUsers(prev => new Set([...prev, userId]));
+    };
+
+    const handleUserOffline = (userId) => {
+      setOnlineUsers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
+    };
+
+    socket.on("userOnline", handleUserOnline);
+    socket.on("userOffline", handleUserOffline);
+
+    return () => {
+      socket.off("userOnline", handleUserOnline);
+      socket.off("userOffline", handleUserOffline);
+    };
+  }, [socket]);
+
+  // Enhanced message receive handler with animations
+  useEffect(() => {
+    const handleReceiveMessage = (message) => {
+      if (selectedChat && message.chatId === selectedChat._id) {
+        setMessages(prev => [...prev, { ...message, animate: true }]);
+        
+        setTimeout(() => {
+          setMessages(prev => 
+            prev.map(msg => 
+              msg._id === message._id ? { ...msg, animate: false } : msg
+            )
+          );
+        }, 1000);
+      }
+    };
+
+    socket.on("receiveMessage", handleReceiveMessage);
+    return () => socket.off("receiveMessage", handleReceiveMessage);
+  }, [selectedChat, socket]);
+
+  // Existing socket event listeners
+  useEffect(() => {
+    const handleTyping = (data) => {
+      if (selectedChat && data.chatId === selectedChat._id) {
+        setIsTyping(true);
+      }
+    };
+
+    const handleStopTyping = (data) => {
+      if (selectedChat && data.chatId === selectedChat._id) {
+        setIsTyping(false);
+      }
+    };
+
+    const handleChatDeleted = (data) => {
+      if (data.chatId === selectedChat?._id) {
+        setActiveChats((prev) =>
+          prev.filter((chat) => chat._id !== data.chatId)
+        );
+        setSelectedChat(null);
+      }
+    };
+
+    const handleMessageReaction = (data) => {
+      if (selectedChat && data.chatId === selectedChat._id) {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg._id === data.messageId
+              ? { ...msg, reactions: data.reactions }
+              : msg
+          )
+        );
+      }
+    };
+
+    socket.on("typing", handleTyping);
+    socket.on("stopTyping", handleStopTyping);
+    socket.on("chatDeleted", handleChatDeleted);
+    socket.on("messageReaction", handleMessageReaction);
+
+    return () => {
+      socket.off("typing", handleTyping);
+      socket.off("stopTyping", handleStopTyping);
+      socket.off("chatDeleted", handleChatDeleted);
+      socket.off("messageReaction", handleMessageReaction);
+    };
+  }, [selectedChat, socket]);
+
+  // Existing useEffect for read receipts
+  useEffect(() => {
+    const handleMessagesRead = (data) => {
+      if (selectedChat && data.chatId === selectedChat._id) {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            data.messageIds.includes(msg._id)
+              ? {
+                  ...msg,
+                  readBy: [...(msg.readBy || []), data.readBy],
+                  isRead: true,
+                }
+              : msg
+          )
+        );
+      }
+    };
+
+    socket.on("messagesRead", handleMessagesRead);
+    return () => {
+      socket.off("messagesRead", handleMessagesRead);
+    };
+  }, [selectedChat, socket]);
+
+  // Pin message function
+  const handlePinMessage = async (messageId) => {
+    try {
+      const token = localStorage.getItem("kobutor_token");
+      const res = await fetch(
+        `http://localhost:3000/api/chats/${selectedChat._id}/messages/${messageId}/pin`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.ok) {
+        const updatedMessage = await res.json();
+        setPinnedMessages(prev => [...prev.filter(msg => msg._id !== messageId), updatedMessage]);
+      }
+    } catch (error) {
+      console.error("Error pinning message:", error);
+    }
+  };
+
   return (
     <div
       className="w-screen min-h-screen bg-cover bg-center text-white flex flex-col transition-all duration-500"
@@ -780,15 +838,15 @@ function Chat() {
       <Header />
       <DarkButton isDark={isDark} setIsDark={setIsDark} />
 
-      <div className="container mx-auto px-2 py-1 pt-10 h-[calc(120vh-100px)] max-w-[1600px]">
-        {/* Outer container with theme background - FIXED */}
-        <div className={`max-w-[1400px] mx-auto h-full rounded-xl overflow-hidden ${getThemeClass()}`}>
+      <div className="container mx-auto px-4 py-1 pt-10 h-[calc(100vh-80px)]">
+        {/* Outer container with theme background */}
+        <div className={`max-w-6xl mx-auto h-full rounded-xl overflow-hidden ${theme.background}`}>
           
-          {/* Inner container with consistent styling */}
-          <div className="w-full h-full backdrop-blur-md bg-black/40 flex flex-col border border-yellow-400/30 shadow-lg">
+          {/* Inner container with theme border */}
+          <div className={`w-full h-full backdrop-blur-md bg-black/40 flex flex-col ${theme.border} shadow-lg`}>
             
-            {/* Enhanced Header with Theme Picker */}
-            <div className="p-4 border-b border-white/20 flex justify-between items-center bg-gradient-to-r from-yellow-400/10 to-transparent">
+            {/* Header with theme gradient */}
+            <div className={`p-4 border-b border-white/20 flex justify-between items-center bg-gradient-to-r ${theme.header}`}>
               <h1 className="text-2xl font-bold flex items-center">
                 <span className="mr-2">💬</span> Pigeon Chat
               </h1>
@@ -813,8 +871,8 @@ function Chat() {
             </div>
 
             <div className="flex flex-1 overflow-hidden">
-              {/* Chat list - keep original styling */}
-              <div className="w-1/4 border-r border-white/20 overflow-y-auto bg-black/30 min-w-[260px]">
+              {/* Chat list */}
+              <div className="w-1/3 border-r border-white/20 overflow-y-auto bg-black/30">
                 {loading ? (
                   <div className="p-4 text-center text-white/60 flex flex-col items-center">
                     <div className="animate-bounce text-2xl mb-2">🐦</div>
@@ -876,11 +934,11 @@ function Chat() {
                 )}
               </div>
 
-              {/* Messages area - consistent background */}
+              {/* Messages area */}
               <div className="flex-1 flex flex-col bg-chat-pattern">
                 {selectedChat ? (
                   <>
-                    <div className="p-4 border-b border-white/20 flex justify-between items-center bg-gradient-to-r from-yellow-400/10 to-transparent">
+                    <div className={`p-4 border-b border-white/20 flex justify-between items-center bg-gradient-to-r ${theme.header}`}>
                       <div className="flex items-center">
                         {(() => {
                           const otherParticipant = selectedChat.participants.find((p) => p._id !== currentUserId);
@@ -959,7 +1017,7 @@ function Chat() {
                               💬
                             </div>
                           </div>
-                          <div className="bg-gradient-to-r from-blue-400 to-purple-500 text-white rounded-2xl rounded-bl-none px-4 py-3 shadow-md">
+                          <div className={`bg-gradient-to-r ${theme.otherChatBox} text-white rounded-2xl rounded-bl-none px-4 py-3 shadow-md`}>
                             <div className="flex space-x-1">
                               <div className="w-2 h-2 bg-white/80 rounded-full animate-bounce"></div>
                               <div className="w-2 h-2 bg-white/80 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
@@ -984,7 +1042,7 @@ function Chat() {
                         <button
                           type="submit"
                           disabled={!newMessage.trim()}
-                          className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black w-10 h-10 rounded-full flex items-center justify-center hover:from-yellow-300 hover:to-orange-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:scale-105"
+                          className={`bg-gradient-to-r ${theme.chatBox} text-black w-10 h-10 rounded-full flex items-center justify-center hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:scale-105`}
                         >
                           ➤
                         </button>

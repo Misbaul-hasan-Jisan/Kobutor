@@ -117,6 +117,15 @@ const CHAT_THEMES = [
     otherChatBox: "from-indigo-400 to-purple-500",
     header: "from-blue-400/20 to-transparent",
     border: "border-blue-400/30"
+  },
+  { 
+    id: "blackhole", 
+    name: "Blackhole", 
+    background: "bg-gradient-to-br from-gray-800 via-black-900 to-gray-900",
+    chatBox: "from-gray-200 to-black/50",
+    otherChatBox: "from-gray-600 to-black/50",
+    header: "from-black-400/20 to-transparent",
+    border: "border-black-400/30"
   }
 ];
 
@@ -840,7 +849,7 @@ function Chat() {
 
       <div className="container mx-auto px-4 py-1 pt-10 h-[calc(100vh-80px)]">
         {/* Outer container with theme background */}
-        <div className={`max-w-6xl mx-auto h-full rounded-xl overflow-hidden ${theme.background}`}>
+        <div className={`max-w-7xl mx-auto h-full rounded-xl overflow-hidden ${theme.background}`}>
           
           {/* Inner container with theme border */}
           <div className={`w-full h-full backdrop-blur-md bg-black/40 flex flex-col ${theme.border} shadow-lg`}>

@@ -81,13 +81,13 @@ return (
 
                 <div className="grid md:grid-cols-2 gap-8">
                     <div>
-                        <h2 className="text-2xl font-semibold mb-6 text-yellow-400">
+                        <h2 className="text-2xl font-semibold mb-6 text-amber-200">
                             Get in Touch
                         </h2>
 
                         <div className="space-y-4 mb-8">
                             <div className="flex items-start">
-                                <div className="bg-yellow-400 text-black w-10 h-10 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                                <div className="bg-amber-600  text-black w-10 h-10 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
                                     <FiMail className="text-lg" />
                                 </div>
                                 <div>
@@ -95,7 +95,7 @@ return (
                                     <p>jisanaa22@gmail.com</p>
                                     <a
                                         href="mailto:jisanaa22@gmail.com"
-                                        className="text-yellow-400 hover:text-yellow-300 text-sm flex items-center mt-1"
+                                        className="text-amber-200 hover:text-yellow-300 text-sm flex items-center mt-1"
                                     >
                                         Write to us <FiArrowRight className="ml-1" />
                                     </a>
@@ -103,7 +103,7 @@ return (
                             </div>
 
                             <div className="flex items-start">
-                                <div className="bg-yellow-400 text-black w-10 h-10 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                                <div className="bg-amber-600  text-black w-10 h-10 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
                                     📱
                                 </div>
                                 <div>
@@ -124,7 +124,7 @@ return (
                             </div>
 
                             <div className="flex items-start">
-                                <div className="bg-yellow-400 text-black w-10 h-10 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                                <div className="bg-amber-600  text-black w-10 h-10 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
                                     📍
                                 </div>
                                 <div>
@@ -139,7 +139,7 @@ return (
                             <p className="text-sm">
                                 Check our{" "}
                                 <button
-                                    className="text-yellow-400 hover:underline"
+                                    className="text-amber-200 hover:underline"
                                     onClick={() => navigate("/faq")}
                                 >
                                     frequently asked questions   
@@ -150,7 +150,7 @@ return (
                     </div>
 
                     <div>
-                        <h2 className="text-2xl font-semibold mb-6 text-yellow-400">
+                        <h2 className="text-2xl font-semibold mb-6 text-amber-200">
                             Write us your message
                         </h2>
 
@@ -222,7 +222,7 @@ return (
 
                             <button
                                 type="submit"
-                                className="w-full bg-yellow-400 dark:bg-yellow-500 text-black dark:text-gray-900 py-2 rounded font-semibold hover:bg-yellow-300 dark:hover:bg-yellow-400 transition flex items-center justify-center button"
+                                className="w-full bg-amber-600  dark:bg-yellow-500 text-black dark:text-gray-900 py-2 rounded font-semibold hover:bg-yellow-300 dark:hover:bg-amber-600  transition flex items-center justify-center button"
                             >
                                 Send Message <FiSend className="ml-2 button__icon" />
                             </button>

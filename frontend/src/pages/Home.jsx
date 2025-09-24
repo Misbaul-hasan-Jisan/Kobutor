@@ -1,17 +1,33 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FiSend, FiSearch, FiMessageSquare, FiUsers } from 'react-icons/fi';
-import { useNavigate } from 'react-router-dom'; // Import useNavigate
+import { useNavigate } from 'react-router-dom';
 import AnimatedSky from '../components/AnimatedSky';
 import background from '../assets/homebg.png';
 import backgroundDark from '../assets/homebg-dark.png';
 import Header from '../components/header';
 import Footer from '../components/Footer';
 import DarkButton from '../components/darkbutton';
+import { Typewriter } from 'react-simple-typewriter';
+
+// Add the missing TypewriterText component
+const TypewriterText = ({ text, speed = 40 }) => {
+  return (
+    <Typewriter
+      words={[text]}
+      loop={1}
+      cursor
+      cursorStyle="|"
+      typeSpeed={speed}
+      deleteSpeed={999999} // Prevent deletion
+      delaySpeed={1000}
+    />
+  );
+};
 
 function Home() {
   const [isDark, setIsDark] = useState(false);
-  const navigate = useNavigate(); // Initialize navigate function
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (isDark) {
@@ -27,28 +43,28 @@ function Home() {
       title: "Release Messages",
       description: "Send anonymous messages into the virtual sky",
       color: "from-blue-400 to-cyan-400",
-      onClick: () => navigate('/release') // Add onClick handler
+      onClick: () => navigate('/release')
     },
     {
       icon: <FiSearch className="text-2xl" />,
       title: "Hunt for Pigeons",
       description: "Discover messages from around the world",
       color: "from-purple-400 to-pink-400",
-      onClick: () => navigate('/hunt') // Add onClick handler
+      onClick: () => navigate('/hunt')
     },
     {
       icon: <FiMessageSquare className="text-2xl" />,
       title: "Real-time Chat",
       description: "Connect with message senders instantly",
       color: "from-orange-400 to-red-400",
-      onClick: () => navigate('/chat') // Add onClick handler
+      onClick: () => navigate('/chat')
     },
     {
       icon: <FiUsers className="text-2xl" />,
       title: "Global Community",
       description: "Meet people from different locations",
       color: "from-green-400 to-teal-400",
-      onClick: () => navigate('/about') // Add onClick handler
+      onClick: () => navigate('/about')
     }
   ];
 
@@ -58,10 +74,10 @@ function Home() {
       style={{ backgroundImage: `url(${isDark ? backgroundDark : background})` }}
     >
       {/* Animated background elements */}
-
+      <AnimatedSky />
       
       <Header />
-      <AnimatedSky />
+   
       <DarkButton isDark={isDark} setIsDark={setIsDark} />
 
       {/* Main Content */}
@@ -73,7 +89,7 @@ function Home() {
           className="text-center max-w-4xl"
         >
           <motion.h1 
-            className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent"
+            className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-amber-200 to-orange-200 bg-clip-text text-transparent"
             initial={{ scale: 0.9 }}
             animate={{ scale: 1 }}
             transition={{ duration: 0.5 }}
@@ -88,7 +104,7 @@ function Home() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3, duration: 0.8 }}
           >
-            Release your thoughts into the sky and let serendipity guide them to someone special
+            <TypewriterText text="Release your thoughts into the sky and let serendipity guide them to someone special" speed={30} />
           </motion.p>
 
           <motion.div
@@ -100,8 +116,8 @@ function Home() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-8 py-4 rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
-              onClick={() => navigate('/release')} // Use navigate instead of window.location
+              className="bg-gradient-to-r from-amber-200 to-orange-100 text-black px-8 py-4 rounded-full font-semibold text-lg shadow-lg hover:shadow-xl transition-all flex items-center gap-2"
+              onClick={() => navigate('/release')}
             >
               <FiSend />
               Release a Pigeon
@@ -110,8 +126,8 @@ function Home() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="border-2 border-yellow-400 text-yellow-400 px-8 py-4 rounded-full font-semibold text-lg hover:bg-yellow-400/10 transition-all flex items-center gap-2"
-              onClick={() => navigate('/hunt')} // Use navigate instead of window.location
+              className="border-2 border-amber-700 text-amber-900 dark:text-amber-100 px-8 py-4 rounded-full font-semibold text-lg hover:bg-amber-200/10 transition-all flex items-center gap-2"
+              onClick={() => navigate('/hunt')}
             >
               <FiSearch />
               Hunt for Messages
@@ -133,8 +149,8 @@ function Home() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.9 + index * 0.1, duration: 0.5 }}
               whileHover={{ y: -5, transition: { duration: 0.2 } }}
-              className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:border-yellow-400/30 transition-all group cursor-pointer" // Add cursor pointer
-              onClick={feature.onClick} // Add onClick handler
+              className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:border-yellow-400/30 transition-all group cursor-pointer"
+              onClick={feature.onClick}
             >
               <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform`}>
                 {feature.icon}
@@ -163,10 +179,10 @@ function Home() {
             { number: "24/7", label: "Active" }
           ].map((stat, index) => (
             <div key={index} className="text-center">
-              <div className="text-2xl md:text-3xl font-bold text-yellow-400 mb-1">
+              <div className="text-2xl md:text-3xl font-bold text-gray-700 dark:text-amber-100 mb-1">
                 {stat.number}
               </div>
-              <div className="text-white/70 text-sm">
+              <div className="text-gray-700 dark:text-amber-100 text-sm">
                 {stat.label}
               </div>
             </div>

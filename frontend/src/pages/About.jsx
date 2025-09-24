@@ -6,6 +6,8 @@ import DarkButton from "../components/darkbutton";
 import Footer from "../components/Footer";
 import { useNavigate } from "react-router-dom";
 
+const amberClass =
+  "bg-amber-700 dark:bg-amber-100 text-black dark:text-gray-900 border-amber-700 dark:border-amber-100 text-amber-700 dark:text-amber-100";
 function About() {
   const [isDark, setIsDark] = useState(false);
   const navigate = useNavigate();
@@ -47,7 +49,7 @@ function About() {
 
           <div className="space-y-6">
             <div className="bg-white/10 dark:bg-gray-800/50 p-6 rounded-lg">
-              <h2 className="text-2xl font-semibold mb-4 text-yellow-400">
+              <h2 className="text-2xl font-semibold mb-4 text-amber-700 dark:text-amber-100">
                 Our Story
               </h2>
               <p className="text-lg">
@@ -60,12 +62,12 @@ function About() {
             </div>
 
             <div className="bg-white/10 dark:bg-gray-800/50 p-6 rounded-lg">
-              <h2 className="text-2xl font-semibold mb-4 text-yellow-400">
+              <h2 className="text-2xl font-semibold mb-4 text-amber-700 dark:text-amber-100">
                 How It Works
               </h2>
               <div className="space-y-4">
                 <div className="flex items-start">
-                  <div className="bg-yellow-400 text-black w-8 h-8 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                  <div className="bg-amber-700 dark:bg-amber-100 text-black dark:text-gray-900 w-8 h-8 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
                     1
                   </div>
                   <p>
@@ -74,7 +76,7 @@ function About() {
                   </p>
                 </div>
                 <div className="flex items-start">
-                  <div className="bg-yellow-400 text-black w-8 h-8 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                  <div className="bg-amber-700 dark:bg-amber-100 text-black dark:text-gray-900 w-8 h-8 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
                     2
                   </div>
                   <p>
@@ -83,7 +85,7 @@ function About() {
                   </p>
                 </div>
                 <div className="flex items-start">
-                  <div className="bg-yellow-400 text-black w-8 h-8 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
+                  <div className="bg-amber-700 dark:bg-amber-100 text-black dark:text-gray-900 w-8 h-8 rounded-full flex items-center justify-center mr-4 flex-shrink-0">
                     3
                   </div>
                   <p>
@@ -95,7 +97,7 @@ function About() {
             </div>
 
             <div className="bg-white/10 dark:bg-gray-800/50 p-6 rounded-lg">
-              <h2 className="text-2xl font-semibold mb-4 text-yellow-400">
+              <h2 className="text-2xl font-semibold mb-4 text-amber-700 dark:text-amber-100">
                 Our Values
               </h2>
               <div className="grid md:grid-cols-2 gap-4">
@@ -133,13 +135,13 @@ function About() {
             <div className="text-center mt-8">
               <button
                 onClick={() => navigate("/release")}
-                className="bg-yellow-400 dark:bg-yellow-500 text-black dark:text-gray-900 px-6 py-3 rounded-full font-semibold hover:bg-yellow-300 dark:hover:bg-yellow-400 transition mx-2"
+                className="bg-amber-700 dark:bg-amber-100 text-black dark:text-gray-900 px-6 py-3 rounded-full font-semibold hover:bg-amber-800 dark:hover:bg-amber-200 transition mx-2"
               >
                 Release Your First Pigeon
               </button>
               <button
                 onClick={() => navigate("/hunt")}
-                className="bg-transparent border border-yellow-400 text-yellow-400 px-6 py-3 rounded-full font-semibold hover:bg-yellow-400/20 transition mx-2"
+                className="bg-transparent border border-amber-700 dark:border-amber-100 text-amber-700 dark:text-amber-100 px-6 py-3 rounded-full font-semibold hover:bg-amber-700/20 dark:hover:bg-amber-100/20 transition mx-2"
               >
                 Hunt for Messages
               </button>

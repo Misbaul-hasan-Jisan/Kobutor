@@ -11,7 +11,14 @@ import {
   addReaction,
   removeReaction,
   toggleReaction,
-  getMessageReactions
+  getMessageReactions,
+  // Add the new imports
+  pinMessage,
+  unpinMessage,
+  togglePinMessage,
+  getPinnedMessages,
+  getUserStatus,
+  getOnlineUsers
 } from "../controllers/chatController.js";
 
 const router = express.Router();
@@ -27,5 +34,14 @@ router.delete("/:chatId", authMiddleware, deleteChat);
 router.post("/:chatId/messages/:messageId/react", authMiddleware, toggleReaction);
 router.delete("/:chatId/messages/:messageId/react", authMiddleware, removeReaction);
 router.get("/:chatId/messages/:messageId/reactions", authMiddleware, getMessageReactions);
+
+// Pin routes
+router.post("/:chatId/messages/:messageId/pin", authMiddleware, togglePinMessage);
+router.delete("/:chatId/messages/:messageId/pin", authMiddleware, unpinMessage);
+router.get("/:chatId/pinned", authMiddleware, getPinnedMessages);
+
+// Status routes
+router.get("/status/online", authMiddleware, getOnlineUsers);
+router.get("/status/user/:userId", authMiddleware, getUserStatus);
 
 export default router;

@@ -469,3 +469,213 @@ export const getMessageReactions = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+
+// Add these new functions to backend/controllers/chatController.js
+
+// Pin a message
+export const pinMessage = async (req, res) => {
+  try {
+    const { chatId, messageId } = req.params;
+    const userId = req.user.id;
+
+    // Check if user is participant in the chat
+    const chat = await Chat.findById(chatId);
+    if (!chat || !chat.participants.includes(userId)) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // Check if message exists
+    const message = await Message.findOne({ _id: messageId, chatId });
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    // Pin the message in chat
+    await chat.pinMessage(messageId, userId);
+
+    // Update the message itself
+    message.isPinned = true;
+    message.pinnedBy = userId;
+    message.pinnedAt = new Date();
+    await message.save();
+
+    // Emit socket event
+    getIO().to(chatId).emit("messagePinned", {
+      chatId,
+      messageId,
+      pinnedBy: userId,
+      pinnedAt: message.pinnedAt
+    });
+
+    res.json({ 
+      message: "Message pinned successfully",
+      pinnedMessage: message
+    });
+  } catch (err) {
+    console.error("Pin message error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Unpin a message
+export const unpinMessage = async (req, res) => {
+  try {
+    const { chatId, messageId } = req.params;
+    const userId = req.user.id;
+
+    // Check if user is participant in the chat
+    const chat = await Chat.findById(chatId);
+    if (!chat || !chat.participants.includes(userId)) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // Check if message exists
+    const message = await Message.findOne({ _id: messageId, chatId });
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    // Unpin the message from chat
+    await chat.unpinMessage(messageId);
+
+    // Update the message itself
+    message.isPinned = false;
+    message.pinnedBy = undefined;
+    message.pinnedAt = undefined;
+    await message.save();
+
+    // Emit socket event
+    getIO().to(chatId).emit("messageUnpinned", {
+      chatId,
+      messageId
+    });
+
+    res.json({ 
+      message: "Message unpinned successfully",
+      unpinnedMessage: message
+    });
+  } catch (err) {
+    console.error("Unpin message error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Toggle pin (pin/unpin)
+export const togglePinMessage = async (req, res) => {
+  try {
+    const { chatId, messageId } = req.params;
+    const userId = req.user.id;
+
+    // Check if user is participant in the chat
+    const chat = await Chat.findById(chatId);
+    if (!chat || !chat.participants.includes(userId)) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // Check if message exists
+    const message = await Message.findOne({ _id: messageId, chatId });
+    if (!message) {
+      return res.status(404).json({ message: "Message not found" });
+    }
+
+    const wasPinned = message.isPinned;
+
+    if (wasPinned) {
+      // Unpin the message
+      await chat.unpinMessage(messageId);
+      message.isPinned = false;
+      message.pinnedBy = undefined;
+      message.pinnedAt = undefined;
+    } else {
+      // Pin the message
+      await chat.pinMessage(messageId, userId);
+      message.isPinned = true;
+      message.pinnedBy = userId;
+      message.pinnedAt = new Date();
+    }
+
+    await message.save();
+
+    // Emit socket event
+    if (wasPinned) {
+      getIO().to(chatId).emit("messageUnpinned", { chatId, messageId });
+    } else {
+      getIO().to(chatId).emit("messagePinned", {
+        chatId,
+        messageId,
+        pinnedBy: userId,
+        pinnedAt: message.pinnedAt
+      });
+    }
+
+    res.json({ 
+      message: wasPinned ? "Message unpinned" : "Message pinned",
+      isPinned: !wasPinned,
+      message: message
+    });
+  } catch (err) {
+    console.error("Toggle pin error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get pinned messages for a chat
+export const getPinnedMessages = async (req, res) => {
+  try {
+    const { chatId } = req.params;
+    const userId = req.user.id;
+
+    // Check if user is participant in the chat
+    const chat = await Chat.findById(chatId);
+    if (!chat || !chat.participants.includes(userId)) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    const pinnedMessages = await Chat.getPinnedMessages(chatId);
+
+    res.json({ pinnedMessages });
+  } catch (err) {
+    console.error("Get pinned messages error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get user status
+export const getUserStatus = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    const userStatus = await UserStatus.getUserStatus(userId);
+
+    if (!userStatus) {
+      return res.json({
+        isOnline: false,
+        status: "offline",
+        lastSeen: new Date()
+      });
+    }
+
+    res.json({
+      isOnline: userStatus.isOnline,
+      status: userStatus.status,
+      lastSeen: userStatus.lastSeen,
+      user: userStatus.userId
+    });
+  } catch (err) {
+    console.error("Get user status error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Get online users
+export const getOnlineUsers = async (req, res) => {
+  try {
+    const onlineUsers = await UserStatus.getOnlineUsers();
+    
+    res.json({ onlineUsers });
+  } catch (err) {
+    console.error("Get online users error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

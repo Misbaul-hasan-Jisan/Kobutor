@@ -217,6 +217,37 @@ function Chat() {
   const currentUserId = currentUser?.id || currentUser?._id;
 
   // Get socket instance
+  let socketInstance = null;
+const getSocket = () => {
+  if (!socketInstance) {
+    socketInstance = io("http://localhost:3000", {
+      transports: ["websocket", "polling"],
+      autoConnect: true,
+      reconnection: true,
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+    });
+
+    // Add connection event listeners
+    socketInstance.on("connect", () => {
+      console.log("Socket connected:", socketInstance.id);
+      const token = localStorage.getItem("kobutor_token");
+      if (token) {
+        console.log("Authenticating after connection...");
+        socketInstance.emit("authenticate", token);
+      }
+    });
+
+    socketInstance.on("disconnect", (reason) => {
+      console.log("Socket disconnected:", reason);
+    });
+
+    socketInstance.on("connect_error", (error) => {
+      console.error("Socket connection error:", error);
+    });
+  }
+  return socketInstance;
+};
   const socket = getSocket();
 
   // Get current theme settings
@@ -244,6 +275,65 @@ function Chat() {
     localStorage.setItem("theme", isDark ? "dark" : "light");
     localStorage.setItem("chatTheme", currentTheme);
   }, [isDark, currentTheme]);
+
+  // Pin/Unpin functionality
+  const handlePinMessage = async (messageId) => {
+    try {
+      const token = localStorage.getItem("kobutor_token");
+      const res = await fetch(
+        `http://localhost:3000/api/chats/${selectedChat._id}/messages/${messageId}/pin`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.ok) {
+        const updatedMessage = await res.json();
+        setPinnedMessages(prev => [...prev.filter(msg => msg._id !== messageId), updatedMessage]);
+      }
+    } catch (error) {
+      console.error("Error pinning message:", error);
+    }
+  };
+
+  const handleUnpinMessage = async (messageId) => {
+    try {
+      const token = localStorage.getItem("kobutor_token");
+      const res = await fetch(
+        `http://localhost:3000/api/chats/${selectedChat._id}/messages/${messageId}/unpin`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.ok) {
+        setPinnedMessages(prev => prev.filter(msg => msg._id !== messageId));
+      }
+    } catch (error) {
+      console.error("Error unpinning message:", error);
+    }
+  };
+
+  // Pin Button Component
+  const PinButton = ({ message }) => {
+    const isPinned = message.isPinned || pinnedMessages.some(m => m._id === message._id);
+    
+    return (
+      <button
+        onClick={() => isPinned ? handleUnpinMessage(message._id) : handlePinMessage(message._id)}
+        className="text-xs p-1 hover:bg-black/20 rounded transition-all"
+        title={isPinned ? "Unpin message" : "Pin message"}
+      >
+        {isPinned ? "📌" : "📍"}
+      </button>
+    );
+  };
 
   // Enhanced Message Bubble Component with theme colors
   const MessageBubble = ({ message, isOwnMessage, showDate }) => {
@@ -353,19 +443,13 @@ function Chat() {
                 )}
                 
                 <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => handlePinMessage(message._id)}
-                    className="text-xs p-1 hover:bg-black/20 rounded"
-                    title="Pin message"
-                  >
-                    📌
-                  </button>
+                  <PinButton message={message} />
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowReactionPicker(showReactionPicker === message._id ? null : message._id);
                     }}
-                    className="text-xs p-1 hover:bg-black/20 rounded"
+                    className="text-xs p-1 hover:bg-black/20 rounded transition-all"
                     title="Add reaction"
                   >
                     😊
@@ -461,9 +545,57 @@ function Chat() {
     </AnimatePresence>
   );
 
-  // ... (rest of your existing functions remain the same - selectChat, markMessagesAsRead, handleTyping, etc.)
+  // Socket event handlers
+  const handleMessagePinned = (data) => {
+    if (selectedChat && data.chatId === selectedChat._id) {
+      setMessages(prev => 
+        prev.map(msg => 
+          msg._id === data.messageId 
+            ? { ...msg, isPinned: true, pinnedBy: data.pinnedBy, pinnedAt: data.pinnedAt }
+            : msg
+        )
+      );
+      
+      // Update pinned messages list
+      setPinnedMessages(prev => {
+        const filtered = prev.filter(msg => msg._id !== data.messageId);
+        const pinnedMsg = messages.find(msg => msg._id === data.messageId);
+        return pinnedMsg ? [...filtered, { ...pinnedMsg, isPinned: true, pinnedBy: data.pinnedBy, pinnedAt: data.pinnedAt }] : filtered;
+      });
+    }
+  };
 
-  // Your existing functions (keeping them as is)
+  const handleMessageUnpinned = (data) => {
+    if (selectedChat && data.chatId === selectedChat._id) {
+      setMessages(prev => 
+        prev.map(msg => 
+          msg._id === data.messageId 
+            ? { ...msg, isPinned: false, pinnedBy: null, pinnedAt: null }
+            : msg
+        )
+      );
+      
+      setPinnedMessages(prev => prev.filter(msg => msg._id !== data.messageId));
+    }
+  };
+
+  const handleUserOnline = (userId) => {
+    setOnlineUsers(prev => new Set([...prev, userId]));
+  };
+
+  const handleUserOffline = (userId) => {
+    setOnlineUsers(prev => {
+      const newSet = new Set(prev);
+      newSet.delete(userId);
+      return newSet;
+    });
+  };
+
+  const handleUserAway = (userId) => {
+    console.log(`User ${userId} is away`);
+  };
+
+  // Utility functions
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
     const today = new Date();
@@ -492,6 +624,19 @@ function Chat() {
       setMessages(data);
       socket.emit("joinChat", chat._id);
       markMessagesAsRead(data);
+
+      // Fetch pinned messages for this chat
+      const pinnedRes = await fetch(
+        `http://localhost:3000/api/chats/${chat._id}/pinned-messages`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
+
+      if (pinnedRes.ok) {
+        const pinnedData = await pinnedRes.json();
+        setPinnedMessages(pinnedData);
+      }
     } catch (error) {
       console.error("Error selecting chat:", error);
     }
@@ -656,7 +801,7 @@ function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  // Existing fetch chats useEffect
+  // Fetch chats
   useEffect(() => {
     const fetchChats = async () => {
       try {
@@ -685,13 +830,13 @@ function Chat() {
     fetchChats();
   }, [initialChatId]);
 
-  // Existing auth check
+  // Auth check
   useEffect(() => {
     const token = localStorage.getItem("kobutor_token");
     if (!token) navigate("/login");
   }, [navigate]);
 
-  // Existing socket auth
+  // Socket auth
   useEffect(() => {
     const token = localStorage.getItem("kobutor_token");
     if (token) {
@@ -699,31 +844,9 @@ function Chat() {
     }
   }, [socket]);
 
-  // Socket event listeners with online status
+  // Comprehensive socket event listeners
   useEffect(() => {
-    const handleUserOnline = (userId) => {
-      setOnlineUsers(prev => new Set([...prev, userId]));
-    };
-
-    const handleUserOffline = (userId) => {
-      setOnlineUsers(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(userId);
-        return newSet;
-      });
-    };
-
-    socket.on("userOnline", handleUserOnline);
-    socket.on("userOffline", handleUserOffline);
-
-    return () => {
-      socket.off("userOnline", handleUserOnline);
-      socket.off("userOffline", handleUserOffline);
-    };
-  }, [socket]);
-
-  // Enhanced message receive handler with animations
-  useEffect(() => {
+    // Enhanced message receive handler with animations
     const handleReceiveMessage = (message) => {
       if (selectedChat && message.chatId === selectedChat._id) {
         setMessages(prev => [...prev, { ...message, animate: true }]);
@@ -738,12 +861,6 @@ function Chat() {
       }
     };
 
-    socket.on("receiveMessage", handleReceiveMessage);
-    return () => socket.off("receiveMessage", handleReceiveMessage);
-  }, [selectedChat, socket]);
-
-  // Existing socket event listeners
-  useEffect(() => {
     const handleTyping = (data) => {
       if (selectedChat && data.chatId === selectedChat._id) {
         setIsTyping(true);
@@ -777,21 +894,6 @@ function Chat() {
       }
     };
 
-    socket.on("typing", handleTyping);
-    socket.on("stopTyping", handleStopTyping);
-    socket.on("chatDeleted", handleChatDeleted);
-    socket.on("messageReaction", handleMessageReaction);
-
-    return () => {
-      socket.off("typing", handleTyping);
-      socket.off("stopTyping", handleStopTyping);
-      socket.off("chatDeleted", handleChatDeleted);
-      socket.off("messageReaction", handleMessageReaction);
-    };
-  }, [selectedChat, socket]);
-
-  // Existing useEffect for read receipts
-  useEffect(() => {
     const handleMessagesRead = (data) => {
       if (selectedChat && data.chatId === selectedChat._id) {
         setMessages((prev) =>
@@ -808,34 +910,36 @@ function Chat() {
       }
     };
 
+    // Add all socket event listeners
+    socket.on("receiveMessage", handleReceiveMessage);
+    socket.on("typing", handleTyping);
+    socket.on("stopTyping", handleStopTyping);
+    socket.on("chatDeleted", handleChatDeleted);
+    socket.on("messageReaction", handleMessageReaction);
     socket.on("messagesRead", handleMessagesRead);
+    
+    // Add the new pin/unpin and online/offline events
+    socket.on("messagePinned", handleMessagePinned);
+    socket.on("messageUnpinned", handleMessageUnpinned);
+    socket.on("userOnline", handleUserOnline);
+    socket.on("userOffline", handleUserOffline);
+    socket.on("userAway", handleUserAway);
+
     return () => {
+      // Clean up all event listeners
+      socket.off("receiveMessage", handleReceiveMessage);
+      socket.off("typing", handleTyping);
+      socket.off("stopTyping", handleStopTyping);
+      socket.off("chatDeleted", handleChatDeleted);
+      socket.off("messageReaction", handleMessageReaction);
       socket.off("messagesRead", handleMessagesRead);
+      socket.off("messagePinned", handleMessagePinned);
+      socket.off("messageUnpinned", handleMessageUnpinned);
+      socket.off("userOnline", handleUserOnline);
+      socket.off("userOffline", handleUserOffline);
+      socket.off("userAway", handleUserAway);
     };
-  }, [selectedChat, socket]);
-
-  // Pin message function
-  const handlePinMessage = async (messageId) => {
-    try {
-      const token = localStorage.getItem("kobutor_token");
-      const res = await fetch(
-        `http://localhost:3000/api/chats/${selectedChat._id}/messages/${messageId}/pin`,
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (res.ok) {
-        const updatedMessage = await res.json();
-        setPinnedMessages(prev => [...prev.filter(msg => msg._id !== messageId), updatedMessage]);
-      }
-    } catch (error) {
-      console.error("Error pinning message:", error);
-    }
-  };
+  }, [selectedChat, socket, messages]);
 
   return (
     <div
@@ -996,8 +1100,15 @@ function Chat() {
                         </div>
                         <div className="space-y-2 max-h-32 overflow-y-auto">
                           {pinnedMessages.map((msg) => (
-                            <div key={msg._id} className="text-xs bg-black/30 rounded p-2 truncate">
-                              {msg.text}
+                            <div key={msg._id} className="text-xs bg-black/30 rounded p-2 truncate flex justify-between items-center">
+                              <span>{msg.text}</span>
+                              <button
+                                onClick={() => handleUnpinMessage(msg._id)}
+                                className="text-xs p-1 hover:bg-black/20 rounded"
+                                title="Unpin message"
+                              >
+                                ❌
+                              </button>
                             </div>
                           ))}
                         </div>

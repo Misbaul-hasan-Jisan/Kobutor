@@ -8,24 +8,26 @@ const messageSchema = new mongoose.Schema(
     text: { type: String, required: true },
     readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     isRead: { type: Boolean, default: false },
+    isPinned: { type: Boolean, default: false }, // New field for pinning
+    pinnedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, // Who pinned the message
+    pinnedAt: { type: Date }, // When it was pinned
     reactions: {
       type: Map,
       of: {
         users: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
         count: { type: Number, default: 0 }
       },
-      default: () => new Map() // Initialize as empty Map
+      default: () => new Map()
     }
   },
   { 
     timestamps: true,
     toJSON: {
       transform: function(doc, ret) {
-        // Convert Map to object for JSON response
         if (ret.reactions instanceof Map) {
           ret.reactions = Object.fromEntries(ret.reactions);
         } else if (ret.reactions && typeof ret.reactions === 'object') {
-          // Already an object, no conversion needed
+          // Already an object
         } else {
           ret.reactions = {};
         }
@@ -47,13 +49,15 @@ const messageSchema = new mongoose.Schema(
   }
 );
 
-// In your Message model:
+// Index for better performance on pinned messages
+messageSchema.index({ chatId: 1, isPinned: -1, pinnedAt: -1 });
+
 messageSchema.methods.toJSON = function() {
   const message = this.toObject();
   if (message.reactions instanceof Map) {
     message.reactions = Object.fromEntries(message.reactions);
   } else if (message.reactions && typeof message.reactions === 'object') {
-    // Already an object, no conversion needed
+    // Already an object
   } else {
     message.reactions = {};
   }

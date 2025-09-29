@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import UserStatus from "../models/userStatus.js"; 
 
 let io;
+const connectedUsers = new Map(); // Track connected users in memory
 
 export const initIO = (server) => {
   io = new Server(server, {
@@ -23,12 +24,24 @@ export const initIO = (server) => {
     // Authenticate socket connection
     socket.on("authenticate", async (token) => {
       try {
+        // Check if already authenticated to prevent duplicates
+        if (socket.userId) {
+          console.log(`User ${socket.userId} already authenticated, skipping`);
+          return;
+        }
+
         const decoded = jwt.verify(
           token,
           process.env.JWT_SECRET || "secretkey"
         );
         socket.userId = decoded.id;
         socket.join(decoded.id);
+        
+        // Track connected user
+        connectedUsers.set(decoded.id, {
+          socketId: socket.id,
+          userId: decoded.id
+        });
         
         // Update user status to online
         await UserStatus.findOneAndUpdate(
@@ -42,17 +55,20 @@ export const initIO = (server) => {
           { upsert: true, new: true }
         );
         
-        // Notify all users that this user is online
-        socket.broadcast.emit("userOnline", decoded.id);
-        
-        // Send current online users to the newly connected client
+        // Get ALL currently online users (from database for accuracy)
         const onlineUsers = await UserStatus.find({ 
           isOnline: true 
         }).select('userId');
         const onlineUserIds = onlineUsers.map(user => user.userId.toString());
         
+        console.log(`User ${decoded.id} authenticated, online users:`, onlineUserIds);
+        
+        // 1. Send current online users to the newly connected client
         socket.emit("onlineUsers", onlineUserIds);
-        console.log(`User ${decoded.id} authenticated on socket, online users:`, onlineUserIds);
+        
+        // 2. Notify ALL other clients that this user is now online
+        socket.broadcast.emit("userOnline", decoded.id);
+        
       } catch (err) {
         console.error("Authentication error:", err);
         socket.disconnect();
@@ -61,18 +77,43 @@ export const initIO = (server) => {
 
     // Add this new event handler for getting online users
     socket.on("getOnlineUsers", async () => {
-      if (socket.userId) {
+      try {
         const onlineUsers = await UserStatus.find({ 
           isOnline: true 
         }).select('userId');
         const onlineUserIds = onlineUsers.map(user => user.userId.toString());
         socket.emit("onlineUsers", onlineUserIds);
+        console.log(`Sent online users to ${socket.userId}:`, onlineUserIds);
+      } catch (error) {
+        console.error("Error getting online users:", error);
+      }
+    });
+
+    // Request online status for specific users
+    socket.on("requestUserStatus", async (userIds) => {
+      try {
+        const userStatuses = await UserStatus.find({ 
+          userId: { $in: userIds } 
+        }).select('userId isOnline status lastSeen');
+        
+        const statusMap = {};
+        userStatuses.forEach(status => {
+          statusMap[status.userId] = {
+            isOnline: status.isOnline,
+            status: status.status,
+            lastSeen: status.lastSeen
+          };
+        });
+        
+        socket.emit("userStatuses", statusMap);
+      } catch (error) {
+        console.error("Error getting user statuses:", error);
       }
     });
 
     socket.on("joinChat", (chatId) => {
       socket.join(chatId);
-      console.log(`User joined chat: ${chatId}`);
+      console.log(`User ${socket.userId} joined chat: ${chatId}`);
     });
 
     socket.on("messageReaction", (data) => {
@@ -168,6 +209,9 @@ export const initIO = (server) => {
       console.log("User disconnected:", socket.id);
       
       if (socket.userId) {
+        // Remove from connected users map
+        connectedUsers.delete(socket.userId);
+        
         // Update user status to offline
         await UserStatus.findOneAndUpdate(
           { userId: socket.userId },
@@ -178,8 +222,8 @@ export const initIO = (server) => {
           }
         );
         
-        // Notify all users that this user is offline
-        socket.broadcast.emit("userOffline", socket.userId);
+        // Notify ALL users that this user is offline
+        io.emit("userOffline", socket.userId);
       }
     });
   });

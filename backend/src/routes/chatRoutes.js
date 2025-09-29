@@ -1,4 +1,3 @@
-// backend/routes/chatRoutes.js
 import express from "express";
 import authMiddleware from "../middlewares/authMiddleware.js";
 import { 
@@ -12,7 +11,6 @@ import {
   removeReaction,
   toggleReaction,
   getMessageReactions,
-  // Add the new imports
   pinMessage,
   unpinMessage,
   togglePinMessage,

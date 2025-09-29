@@ -8,17 +8,36 @@ import DarkButton from "../components/darkbutton";
 import background from "../assets/homebg.png";
 import backgroundDark from "../assets/homebg-dark.png";
 
-// Initialize socket once outside component
+// Initialize socket 
 let socketInstance = null;
+
 const getSocket = () => {
   if (!socketInstance) {
+    console.log("🆕 Creating new socket instance");
     socketInstance = io("http://localhost:3000", {
       transports: ["websocket", "polling"],
+      autoConnect: false, // Important: don't auto-connect
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      timeout: 10000
+    });
+
+    // Global event listeners (only set once)
+    socketInstance.on("connect", () => {
+      console.log("✅ Global: Socket connected:", socketInstance.id);
+    });
+
+    socketInstance.on("disconnect", (reason) => {
+      console.log("🔌 Global: Socket disconnected:", reason);
+    });
+
+    socketInstance.on("connect_error", (error) => {
+      console.error("❌ Global: Socket connection error:", error);
     });
   }
   return socketInstance;
 };
-
 // Enhanced reaction emojis with groups
 const REACTION_GROUPS = [
   ["❤️", "😂", "😮", "😢", "😡"],
@@ -210,45 +229,57 @@ function Chat() {
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [currentTheme, setCurrentTheme] = useState("default");
   const [onlineUsers, setOnlineUsers] = useState(new Set());
+  const [socketConnected, setSocketConnected] = useState(false);
+  const [connectionError, setConnectionError] = useState(null);
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
   const { chatId: initialChatId } = useParams();
   const currentUser = JSON.parse(localStorage.getItem("kobutor_user"));
   const currentUserId = currentUser?.id || currentUser?._id;
 
-  // Get socket instance
-  let socketInstance = null;
-const getSocket = () => {
-  if (!socketInstance) {
-    socketInstance = io("http://localhost:3000", {
-      transports: ["websocket", "polling"],
-      autoConnect: true,
-      reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-    });
 
-    // Add connection event listeners
-    socketInstance.on("connect", () => {
-      console.log("Socket connected:", socketInstance.id);
-      const token = localStorage.getItem("kobutor_token");
-      if (token) {
-        console.log("Authenticating after connection...");
-        socketInstance.emit("authenticate", token);
-      }
-    });
-
-    socketInstance.on("disconnect", (reason) => {
-      console.log("Socket disconnected:", reason);
-    });
-
-    socketInstance.on("connect_error", (error) => {
-      console.error("Socket connection error:", error);
-    });
-  }
-  return socketInstance;
-};
   const socket = getSocket();
+    // Socket connection management
+  useEffect(() => {
+    
+    // Component-specific connection handlers
+    const handleConnect = () => {
+      console.log("✅ Socket connected in component");
+      setSocketConnected(true);
+      setConnectionError(null);
+    };
+
+    const handleConnectError = (error) => {
+      console.error("❌ Socket connection error in component:", error);
+      setSocketConnected(false);
+      setConnectionError("Failed to connect to server");
+    };
+
+    const handleDisconnect = (reason) => {
+      console.log("🔌 Socket disconnected in component:", reason);
+      setSocketConnected(false);
+    };
+
+    // Add component listeners
+    socket.on("connect", handleConnect);
+    socket.on("connect_error", handleConnectError);
+    socket.on("disconnect", handleDisconnect);
+
+    // Connect socket if not already connected
+    if (!socket.connected) {
+      console.log("🔄 Connecting socket from component...");
+      socket.connect();
+    } else {
+      setSocketConnected(true);
+    }
+
+    // Cleanup
+    return () => {
+      socket.off("connect", handleConnect);
+      socket.off("connect_error", handleConnectError);
+      socket.off("disconnect", handleDisconnect);
+    };
+  }, [socket, navigate]);
 
   // Get current theme settings
   const getCurrentTheme = () => {
@@ -321,20 +352,21 @@ const getSocket = () => {
   };
 
   // Pin Button Component
-  const PinButton = ({ message }) => {
-    const isPinned = message.isPinned || pinnedMessages.some(m => m._id === message._id);
-    
-    return (
-      <button
-        onClick={() => isPinned ? handleUnpinMessage(message._id) : handlePinMessage(message._id)}
-        className="text-xs p-1 hover:bg-black/20 rounded transition-all"
-        title={isPinned ? "Unpin message" : "Pin message"}
-      >
-        {isPinned ? "📌" : "📍"}
-      </button>
-    );
-  };
-
+const PinButton = ({ message }) => {
+  // Safely check if pinnedMessages is an array before using .some()
+  const isPinned = message.isPinned || 
+    (Array.isArray(pinnedMessages) && pinnedMessages.some(m => m._id === message._id));
+  
+  return (
+    <button
+      onClick={() => isPinned ? handleUnpinMessage(message._id) : handlePinMessage(message._id)}
+      className="text-xs p-1 hover:bg-black/20 rounded transition-all"
+      title={isPinned ? "Unpin message" : "Pin message"}
+    >
+      {isPinned ? "📌" : "📍"}
+    </button>
+  );
+};
   // Enhanced Message Bubble Component with theme colors
   const MessageBubble = ({ message, isOwnMessage, showDate }) => {
     const avatar = generateAvatar(message.sender._id, message.sender.username);
@@ -382,9 +414,6 @@ const getSocket = () => {
               <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-sm shadow-md`}>
                 {avatar.emoji}
               </div>
-              {isOnline && (
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
-              )}
             </div>
           )}
 
@@ -464,9 +493,7 @@ const getSocket = () => {
               <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-sm shadow-md`}>
                 {avatar.emoji}
               </div>
-              {isOnline && (
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
-              )}
+              
             </div>
           )}
         </div>
@@ -508,6 +535,19 @@ const getSocket = () => {
     );
   };
 
+  const requestUserStatuses = (userIds) => {
+  if (socketConnected && userIds.length > 0) {
+    socket.emit("requestUserStatus", userIds);
+  }
+};
+
+  const handleManualReconnect = () => {
+  setConnectionError(null);
+  if (!socket.connected) {
+    socket.connect();
+  }
+};
+
   // Theme selector component with improved layout
   const ThemeSelector = () => (
     <AnimatePresence>
@@ -546,25 +586,34 @@ const getSocket = () => {
   );
 
   // Socket event handlers
-  const handleMessagePinned = (data) => {
-    if (selectedChat && data.chatId === selectedChat._id) {
-      setMessages(prev => 
-        prev.map(msg => 
-          msg._id === data.messageId 
-            ? { ...msg, isPinned: true, pinnedBy: data.pinnedBy, pinnedAt: data.pinnedAt }
-            : msg
-        )
-      );
+const handleMessagePinned = (data) => {
+  if (selectedChat && data.chatId === selectedChat._id) {
+    setMessages(prev => 
+      prev.map(msg => 
+        msg._id === data.messageId 
+          ? { ...msg, isPinned: true, pinnedBy: data.pinnedBy, pinnedAt: data.pinnedAt }
+          : msg
+      )
+    );
+    
+    // Fix: Use functional update and ensure array operations
+    setPinnedMessages(prev => {
+      // Ensure prev is an array
+      const currentPinned = Array.isArray(prev) ? prev : [];
+      const filtered = currentPinned.filter(msg => msg._id !== data.messageId);
       
-      // Update pinned messages list
-      setPinnedMessages(prev => {
-        const filtered = prev.filter(msg => msg._id !== data.messageId);
-        const pinnedMsg = messages.find(msg => msg._id === data.messageId);
-        return pinnedMsg ? [...filtered, { ...pinnedMsg, isPinned: true, pinnedBy: data.pinnedBy, pinnedAt: data.pinnedAt }] : filtered;
-      });
-    }
-  };
-
+      // Create a basic pinned message object
+      const pinnedMsg = {
+        _id: data.messageId,
+        text: `Pinned message`, // This will be updated when the messages state updates
+        isPinned: true,
+        pinnedBy: data.pinnedBy,
+        pinnedAt: data.pinnedAt
+      };
+      return [...filtered, pinnedMsg];
+    });
+  }
+};
   const handleMessageUnpinned = (data) => {
     if (selectedChat && data.chatId === selectedChat._id) {
       setMessages(prev => 
@@ -579,22 +628,31 @@ const getSocket = () => {
     }
   };
 
-  const handleUserOnline = (userId) => {
-    setOnlineUsers(prev => new Set([...prev, userId]));
-  };
+const handleOnlineUsers = (userIds) => {
+  console.log("📱 Received online users:", userIds);
+  setOnlineUsers(new Set(userIds));
+};
 
-  const handleUserOffline = (userId) => {
-    setOnlineUsers(prev => {
-      const newSet = new Set(prev);
-      newSet.delete(userId);
-      return newSet;
-    });
-  };
+const handleUserOnline = (userId) => {
+  console.log("🟢 User came online:", userId);
+  setOnlineUsers(prev => new Set([...prev, userId]));
+};
 
-  const handleUserAway = (userId) => {
-    console.log(`User ${userId} is away`);
-  };
+const handleUserOffline = (userId) => {
+  console.log("🔴 User went offline:", userId);
+  setOnlineUsers(prev => {
+    const newSet = new Set(prev);
+    newSet.delete(userId);
+    return newSet;
+  });
+};
 
+const handleUserStatuses = (statusMap) => {
+  console.log("📊 Received user statuses:", statusMap);
+  // Update online users based on status map
+  const onlineUserIds = Object.keys(statusMap).filter(userId => statusMap[userId].isOnline);
+  setOnlineUsers(new Set(onlineUserIds));
+};
   // Utility functions
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
@@ -607,25 +665,26 @@ const getSocket = () => {
     return date.toLocaleDateString();
   };
 
-  const selectChat = async (chat) => {
+ const selectChat = async (chat) => {
+  try {
+    setSelectedChat(chat);
+    const token = localStorage.getItem("kobutor_token");
+    const res = await fetch(
+      `http://localhost:3000/api/chats/${chat._id}/messages`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    if (!res.ok) throw new Error("Failed to fetch messages");
+
+    const data = await res.json();
+    setMessages(data);
+    socket.emit("joinChat", chat._id);
+    markMessagesAsRead(data);
+
+    // Fetch pinned messages for this chat - with better error handling
     try {
-      setSelectedChat(chat);
-      const token = localStorage.getItem("kobutor_token");
-      const res = await fetch(
-        `http://localhost:3000/api/chats/${chat._id}/messages`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
-
-      if (!res.ok) throw new Error("Failed to fetch messages");
-
-      const data = await res.json();
-      setMessages(data);
-      socket.emit("joinChat", chat._id);
-      markMessagesAsRead(data);
-
-      // Fetch pinned messages for this chat
       const pinnedRes = await fetch(
         `http://localhost:3000/api/chats/${chat._id}/pinned-messages`,
         {
@@ -635,13 +694,28 @@ const getSocket = () => {
 
       if (pinnedRes.ok) {
         const pinnedData = await pinnedRes.json();
-        setPinnedMessages(pinnedData);
+        // Ensure pinnedData is always an array
+        setPinnedMessages(Array.isArray(pinnedData) ? pinnedData : []);
+      } else {
+        console.log('Pinned messages endpoint returned error:', pinnedRes.status);
+        setPinnedMessages([]); // Set to empty array on error
       }
-    } catch (error) {
-      console.error("Error selecting chat:", error);
+    } catch (pinnedError) {
+      console.log('Error fetching pinned messages:', pinnedError);
+      setPinnedMessages([]); // Set to empty array on error
     }
-  };
 
+    // Request status for the other participant
+    const otherParticipant = chat.participants.find((p) => p._id !== currentUserId);
+    if (otherParticipant) {
+      requestUserStatuses([otherParticipant._id]);
+    }
+  } catch (error) {
+    console.error("Error selecting chat:", error);
+    // Also ensure pinnedMessages is empty array on main error
+    setPinnedMessages([]);
+  }
+};
   const markMessagesAsRead = async (messagesToMark) => {
     try {
       const unreadMessages = messagesToMark.filter(
@@ -921,9 +995,11 @@ const getSocket = () => {
     // Add the new pin/unpin and online/offline events
     socket.on("messagePinned", handleMessagePinned);
     socket.on("messageUnpinned", handleMessageUnpinned);
-    socket.on("userOnline", handleUserOnline);
-    socket.on("userOffline", handleUserOffline);
-    socket.on("userAway", handleUserAway);
+// Add to your socket.on events:
+socket.on("onlineUsers", handleOnlineUsers);
+socket.on("userOnline", handleUserOnline);
+socket.on("userOffline", handleUserOffline);
+socket.on("userStatuses", handleUserStatuses);
 
     return () => {
       // Clean up all event listeners
@@ -935,9 +1011,11 @@ const getSocket = () => {
       socket.off("messagesRead", handleMessagesRead);
       socket.off("messagePinned", handleMessagePinned);
       socket.off("messageUnpinned", handleMessageUnpinned);
-      socket.off("userOnline", handleUserOnline);
-      socket.off("userOffline", handleUserOffline);
-      socket.off("userAway", handleUserAway);
+socket.off("onlineUsers", handleOnlineUsers);
+socket.off("userOnline", handleUserOnline);
+socket.off("userOffline", handleUserOffline);
+socket.off("userStatuses", handleUserStatuses);
+
     };
   }, [selectedChat, socket, messages]);
 
@@ -1011,9 +1089,7 @@ const getSocket = () => {
                           <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-lg mr-3 shadow-md`}>
                             {avatar.emoji}
                           </div>
-                          {isOnline && (
-                            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
-                          )}
+                          
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold truncate">
@@ -1063,9 +1139,7 @@ const getSocket = () => {
                               <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-lg mr-3 shadow-md`}>
                                 {avatar.emoji}
                               </div>
-                              {isOnline && (
-                                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
-                              )}
+                              
                             </div>
                           );
                         })()}

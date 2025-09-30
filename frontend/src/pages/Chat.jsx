@@ -8,17 +8,36 @@ import DarkButton from "../components/darkbutton";
 import background from "../assets/homebg.png";
 import backgroundDark from "../assets/homebg-dark.png";
 
-// Initialize socket once outside component
+// Initialize socket 
 let socketInstance = null;
+
 const getSocket = () => {
   if (!socketInstance) {
+    console.log("🆕 Creating new socket instance");
     socketInstance = io("http://localhost:3000", {
       transports: ["websocket", "polling"],
+      autoConnect: false, // Important: don't auto-connect
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+      timeout: 10000
+    });
+
+    // Global event listeners (only set once)
+    socketInstance.on("connect", () => {
+      console.log("✅ Global: Socket connected:", socketInstance.id);
+    });
+
+    socketInstance.on("disconnect", (reason) => {
+      console.log("🔌 Global: Socket disconnected:", reason);
+    });
+
+    socketInstance.on("connect_error", (error) => {
+      console.error("❌ Global: Socket connection error:", error);
     });
   }
   return socketInstance;
 };
-
 // Enhanced reaction emojis with groups
 const REACTION_GROUPS = [
   ["❤️", "😂", "😮", "😢", "😡"],
@@ -210,14 +229,57 @@ function Chat() {
   const [showThemePicker, setShowThemePicker] = useState(false);
   const [currentTheme, setCurrentTheme] = useState("default");
   const [onlineUsers, setOnlineUsers] = useState(new Set());
+  const [socketConnected, setSocketConnected] = useState(false);
+  const [connectionError, setConnectionError] = useState(null);
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
   const { chatId: initialChatId } = useParams();
   const currentUser = JSON.parse(localStorage.getItem("kobutor_user"));
   const currentUserId = currentUser?.id || currentUser?._id;
 
-  // Get socket instance
+
   const socket = getSocket();
+    // Socket connection management
+  useEffect(() => {
+    
+    // Component-specific connection handlers
+    const handleConnect = () => {
+      console.log("✅ Socket connected in component");
+      setSocketConnected(true);
+      setConnectionError(null);
+    };
+
+    const handleConnectError = (error) => {
+      console.error("❌ Socket connection error in component:", error);
+      setSocketConnected(false);
+      setConnectionError("Failed to connect to server");
+    };
+
+    const handleDisconnect = (reason) => {
+      console.log("🔌 Socket disconnected in component:", reason);
+      setSocketConnected(false);
+    };
+
+    // Add component listeners
+    socket.on("connect", handleConnect);
+    socket.on("connect_error", handleConnectError);
+    socket.on("disconnect", handleDisconnect);
+
+    // Connect socket if not already connected
+    if (!socket.connected) {
+      console.log("🔄 Connecting socket from component...");
+      socket.connect();
+    } else {
+      setSocketConnected(true);
+    }
+
+    // Cleanup
+    return () => {
+      socket.off("connect", handleConnect);
+      socket.off("connect_error", handleConnectError);
+      socket.off("disconnect", handleDisconnect);
+    };
+  }, [socket, navigate]);
 
   // Get current theme settings
   const getCurrentTheme = () => {
@@ -245,6 +307,66 @@ function Chat() {
     localStorage.setItem("chatTheme", currentTheme);
   }, [isDark, currentTheme]);
 
+  // Pin/Unpin functionality
+  const handlePinMessage = async (messageId) => {
+    try {
+      const token = localStorage.getItem("kobutor_token");
+      const res = await fetch(
+        `http://localhost:3000/api/chats/${selectedChat._id}/messages/${messageId}/pin`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.ok) {
+        const updatedMessage = await res.json();
+        setPinnedMessages(prev => [...prev.filter(msg => msg._id !== messageId), updatedMessage]);
+      }
+    } catch (error) {
+      console.error("Error pinning message:", error);
+    }
+  };
+
+  const handleUnpinMessage = async (messageId) => {
+    try {
+      const token = localStorage.getItem("kobutor_token");
+      const res = await fetch(
+        `http://localhost:3000/api/chats/${selectedChat._id}/messages/${messageId}/unpin`,
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.ok) {
+        setPinnedMessages(prev => prev.filter(msg => msg._id !== messageId));
+      }
+    } catch (error) {
+      console.error("Error unpinning message:", error);
+    }
+  };
+
+  // Pin Button Component
+const PinButton = ({ message }) => {
+  // Safely check if pinnedMessages is an array before using .some()
+  const isPinned = message.isPinned || 
+    (Array.isArray(pinnedMessages) && pinnedMessages.some(m => m._id === message._id));
+  
+  return (
+    <button
+      onClick={() => isPinned ? handleUnpinMessage(message._id) : handlePinMessage(message._id)}
+      className="text-xs p-1 hover:bg-black/20 rounded transition-all"
+      title={isPinned ? "Unpin message" : "Pin message"}
+    >
+      {isPinned ? "📌" : "📍"}
+    </button>
+  );
+};
   // Enhanced Message Bubble Component with theme colors
   const MessageBubble = ({ message, isOwnMessage, showDate }) => {
     const avatar = generateAvatar(message.sender._id, message.sender.username);
@@ -292,9 +414,6 @@ function Chat() {
               <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-sm shadow-md`}>
                 {avatar.emoji}
               </div>
-              {isOnline && (
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
-              )}
             </div>
           )}
 
@@ -353,19 +472,13 @@ function Chat() {
                 )}
                 
                 <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => handlePinMessage(message._id)}
-                    className="text-xs p-1 hover:bg-black/20 rounded"
-                    title="Pin message"
-                  >
-                    📌
-                  </button>
+                  <PinButton message={message} />
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
                       setShowReactionPicker(showReactionPicker === message._id ? null : message._id);
                     }}
-                    className="text-xs p-1 hover:bg-black/20 rounded"
+                    className="text-xs p-1 hover:bg-black/20 rounded transition-all"
                     title="Add reaction"
                   >
                     😊
@@ -380,9 +493,7 @@ function Chat() {
               <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-sm shadow-md`}>
                 {avatar.emoji}
               </div>
-              {isOnline && (
-                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
-              )}
+              
             </div>
           )}
         </div>
@@ -424,6 +535,19 @@ function Chat() {
     );
   };
 
+  const requestUserStatuses = (userIds) => {
+  if (socketConnected && userIds.length > 0) {
+    socket.emit("requestUserStatus", userIds);
+  }
+};
+
+  const handleManualReconnect = () => {
+  setConnectionError(null);
+  if (!socket.connected) {
+    socket.connect();
+  }
+};
+
   // Theme selector component with improved layout
   const ThemeSelector = () => (
     <AnimatePresence>
@@ -461,9 +585,75 @@ function Chat() {
     </AnimatePresence>
   );
 
-  // ... (rest of your existing functions remain the same - selectChat, markMessagesAsRead, handleTyping, etc.)
+  // Socket event handlers
+const handleMessagePinned = (data) => {
+  if (selectedChat && data.chatId === selectedChat._id) {
+    setMessages(prev => 
+      prev.map(msg => 
+        msg._id === data.messageId 
+          ? { ...msg, isPinned: true, pinnedBy: data.pinnedBy, pinnedAt: data.pinnedAt }
+          : msg
+      )
+    );
+    
+    // Fix: Use functional update and ensure array operations
+    setPinnedMessages(prev => {
+      // Ensure prev is an array
+      const currentPinned = Array.isArray(prev) ? prev : [];
+      const filtered = currentPinned.filter(msg => msg._id !== data.messageId);
+      
+      // Create a basic pinned message object
+      const pinnedMsg = {
+        _id: data.messageId,
+        text: `Pinned message`, // This will be updated when the messages state updates
+        isPinned: true,
+        pinnedBy: data.pinnedBy,
+        pinnedAt: data.pinnedAt
+      };
+      return [...filtered, pinnedMsg];
+    });
+  }
+};
+  const handleMessageUnpinned = (data) => {
+    if (selectedChat && data.chatId === selectedChat._id) {
+      setMessages(prev => 
+        prev.map(msg => 
+          msg._id === data.messageId 
+            ? { ...msg, isPinned: false, pinnedBy: null, pinnedAt: null }
+            : msg
+        )
+      );
+      
+      setPinnedMessages(prev => prev.filter(msg => msg._id !== data.messageId));
+    }
+  };
 
-  // Your existing functions (keeping them as is)
+const handleOnlineUsers = (userIds) => {
+  console.log("📱 Received online users:", userIds);
+  setOnlineUsers(new Set(userIds));
+};
+
+const handleUserOnline = (userId) => {
+  console.log("🟢 User came online:", userId);
+  setOnlineUsers(prev => new Set([...prev, userId]));
+};
+
+const handleUserOffline = (userId) => {
+  console.log("🔴 User went offline:", userId);
+  setOnlineUsers(prev => {
+    const newSet = new Set(prev);
+    newSet.delete(userId);
+    return newSet;
+  });
+};
+
+const handleUserStatuses = (statusMap) => {
+  console.log("📊 Received user statuses:", statusMap);
+  // Update online users based on status map
+  const onlineUserIds = Object.keys(statusMap).filter(userId => statusMap[userId].isOnline);
+  setOnlineUsers(new Set(onlineUserIds));
+};
+  // Utility functions
   const formatDate = (dateStr) => {
     const date = new Date(dateStr);
     const today = new Date();
@@ -475,28 +665,57 @@ function Chat() {
     return date.toLocaleDateString();
   };
 
-  const selectChat = async (chat) => {
+ const selectChat = async (chat) => {
+  try {
+    setSelectedChat(chat);
+    const token = localStorage.getItem("kobutor_token");
+    const res = await fetch(
+      `http://localhost:3000/api/chats/${chat._id}/messages`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
+
+    if (!res.ok) throw new Error("Failed to fetch messages");
+
+    const data = await res.json();
+    setMessages(data);
+    socket.emit("joinChat", chat._id);
+    markMessagesAsRead(data);
+
+    // Fetch pinned messages for this chat - with better error handling
     try {
-      setSelectedChat(chat);
-      const token = localStorage.getItem("kobutor_token");
-      const res = await fetch(
-        `http://localhost:3000/api/chats/${chat._id}/messages`,
+      const pinnedRes = await fetch(
+        `http://localhost:3000/api/chats/${chat._id}/pinned-messages`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
 
-      if (!res.ok) throw new Error("Failed to fetch messages");
-
-      const data = await res.json();
-      setMessages(data);
-      socket.emit("joinChat", chat._id);
-      markMessagesAsRead(data);
-    } catch (error) {
-      console.error("Error selecting chat:", error);
+      if (pinnedRes.ok) {
+        const pinnedData = await pinnedRes.json();
+        // Ensure pinnedData is always an array
+        setPinnedMessages(Array.isArray(pinnedData) ? pinnedData : []);
+      } else {
+        console.log('Pinned messages endpoint returned error:', pinnedRes.status);
+        setPinnedMessages([]); // Set to empty array on error
+      }
+    } catch (pinnedError) {
+      console.log('Error fetching pinned messages:', pinnedError);
+      setPinnedMessages([]); // Set to empty array on error
     }
-  };
 
+    // Request status for the other participant
+    const otherParticipant = chat.participants.find((p) => p._id !== currentUserId);
+    if (otherParticipant) {
+      requestUserStatuses([otherParticipant._id]);
+    }
+  } catch (error) {
+    console.error("Error selecting chat:", error);
+    // Also ensure pinnedMessages is empty array on main error
+    setPinnedMessages([]);
+  }
+};
   const markMessagesAsRead = async (messagesToMark) => {
     try {
       const unreadMessages = messagesToMark.filter(
@@ -656,7 +875,7 @@ function Chat() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isTyping]);
 
-  // Existing fetch chats useEffect
+  // Fetch chats
   useEffect(() => {
     const fetchChats = async () => {
       try {
@@ -685,13 +904,13 @@ function Chat() {
     fetchChats();
   }, [initialChatId]);
 
-  // Existing auth check
+  // Auth check
   useEffect(() => {
     const token = localStorage.getItem("kobutor_token");
     if (!token) navigate("/login");
   }, [navigate]);
 
-  // Existing socket auth
+  // Socket auth
   useEffect(() => {
     const token = localStorage.getItem("kobutor_token");
     if (token) {
@@ -699,31 +918,9 @@ function Chat() {
     }
   }, [socket]);
 
-  // Socket event listeners with online status
+  // Comprehensive socket event listeners
   useEffect(() => {
-    const handleUserOnline = (userId) => {
-      setOnlineUsers(prev => new Set([...prev, userId]));
-    };
-
-    const handleUserOffline = (userId) => {
-      setOnlineUsers(prev => {
-        const newSet = new Set(prev);
-        newSet.delete(userId);
-        return newSet;
-      });
-    };
-
-    socket.on("userOnline", handleUserOnline);
-    socket.on("userOffline", handleUserOffline);
-
-    return () => {
-      socket.off("userOnline", handleUserOnline);
-      socket.off("userOffline", handleUserOffline);
-    };
-  }, [socket]);
-
-  // Enhanced message receive handler with animations
-  useEffect(() => {
+    // Enhanced message receive handler with animations
     const handleReceiveMessage = (message) => {
       if (selectedChat && message.chatId === selectedChat._id) {
         setMessages(prev => [...prev, { ...message, animate: true }]);
@@ -738,12 +935,6 @@ function Chat() {
       }
     };
 
-    socket.on("receiveMessage", handleReceiveMessage);
-    return () => socket.off("receiveMessage", handleReceiveMessage);
-  }, [selectedChat, socket]);
-
-  // Existing socket event listeners
-  useEffect(() => {
     const handleTyping = (data) => {
       if (selectedChat && data.chatId === selectedChat._id) {
         setIsTyping(true);
@@ -777,21 +968,6 @@ function Chat() {
       }
     };
 
-    socket.on("typing", handleTyping);
-    socket.on("stopTyping", handleStopTyping);
-    socket.on("chatDeleted", handleChatDeleted);
-    socket.on("messageReaction", handleMessageReaction);
-
-    return () => {
-      socket.off("typing", handleTyping);
-      socket.off("stopTyping", handleStopTyping);
-      socket.off("chatDeleted", handleChatDeleted);
-      socket.off("messageReaction", handleMessageReaction);
-    };
-  }, [selectedChat, socket]);
-
-  // Existing useEffect for read receipts
-  useEffect(() => {
     const handleMessagesRead = (data) => {
       if (selectedChat && data.chatId === selectedChat._id) {
         setMessages((prev) =>
@@ -808,34 +984,40 @@ function Chat() {
       }
     };
 
+    // Add all socket event listeners
+    socket.on("receiveMessage", handleReceiveMessage);
+    socket.on("typing", handleTyping);
+    socket.on("stopTyping", handleStopTyping);
+    socket.on("chatDeleted", handleChatDeleted);
+    socket.on("messageReaction", handleMessageReaction);
     socket.on("messagesRead", handleMessagesRead);
+    
+    // Add the new pin/unpin and online/offline events
+    socket.on("messagePinned", handleMessagePinned);
+    socket.on("messageUnpinned", handleMessageUnpinned);
+// Add to your socket.on events:
+socket.on("onlineUsers", handleOnlineUsers);
+socket.on("userOnline", handleUserOnline);
+socket.on("userOffline", handleUserOffline);
+socket.on("userStatuses", handleUserStatuses);
+
     return () => {
+      // Clean up all event listeners
+      socket.off("receiveMessage", handleReceiveMessage);
+      socket.off("typing", handleTyping);
+      socket.off("stopTyping", handleStopTyping);
+      socket.off("chatDeleted", handleChatDeleted);
+      socket.off("messageReaction", handleMessageReaction);
       socket.off("messagesRead", handleMessagesRead);
+      socket.off("messagePinned", handleMessagePinned);
+      socket.off("messageUnpinned", handleMessageUnpinned);
+socket.off("onlineUsers", handleOnlineUsers);
+socket.off("userOnline", handleUserOnline);
+socket.off("userOffline", handleUserOffline);
+socket.off("userStatuses", handleUserStatuses);
+
     };
-  }, [selectedChat, socket]);
-
-  // Pin message function
-  const handlePinMessage = async (messageId) => {
-    try {
-      const token = localStorage.getItem("kobutor_token");
-      const res = await fetch(
-        `http://localhost:3000/api/chats/${selectedChat._id}/messages/${messageId}/pin`,
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (res.ok) {
-        const updatedMessage = await res.json();
-        setPinnedMessages(prev => [...prev.filter(msg => msg._id !== messageId), updatedMessage]);
-      }
-    } catch (error) {
-      console.error("Error pinning message:", error);
-    }
-  };
+  }, [selectedChat, socket, messages]);
 
   return (
     <div
@@ -907,9 +1089,7 @@ function Chat() {
                           <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-lg mr-3 shadow-md`}>
                             {avatar.emoji}
                           </div>
-                          {isOnline && (
-                            <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
-                          )}
+                          
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold truncate">
@@ -959,9 +1139,7 @@ function Chat() {
                               <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-lg mr-3 shadow-md`}>
                                 {avatar.emoji}
                               </div>
-                              {isOnline && (
-                                <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-400 rounded-full border-2 border-white"></div>
-                              )}
+                              
                             </div>
                           );
                         })()}
@@ -996,8 +1174,15 @@ function Chat() {
                         </div>
                         <div className="space-y-2 max-h-32 overflow-y-auto">
                           {pinnedMessages.map((msg) => (
-                            <div key={msg._id} className="text-xs bg-black/30 rounded p-2 truncate">
-                              {msg.text}
+                            <div key={msg._id} className="text-xs bg-black/30 rounded p-2 truncate flex justify-between items-center">
+                              <span>{msg.text}</span>
+                              <button
+                                onClick={() => handleUnpinMessage(msg._id)}
+                                className="text-xs p-1 hover:bg-black/20 rounded"
+                                title="Unpin message"
+                              >
+                                ❌
+                              </button>
                             </div>
                           ))}
                         </div>

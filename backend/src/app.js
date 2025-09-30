@@ -4,6 +4,7 @@ import connectDB from './config/db.js';
 import authRoutes from './routes/auth.js';
 import pigeonRoutes from './routes/pigeonRoutes.js';
 import chatRoutes from "./routes/chatRoutes.js";
+import pinnedMessagesRoutes from './routes/pinnedMessages.js'; 
 
 const app = express();
 connectDB();
@@ -14,6 +15,7 @@ app.use(express.json());
 app.use('/api/pigeons', pigeonRoutes);
 app.use('/api/auth', authRoutes);
 app.use("/api/chats", chatRoutes);
+app.use('/api', pinnedMessagesRoutes); // Add this line
 
 app.get('/', (_, res) => res.send('Kobutor backend is running'));
 

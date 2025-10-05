@@ -4,7 +4,7 @@ import jwt from "jsonwebtoken";
 import UserStatus from "../models/userStatus.js"; 
 
 let io;
-const connectedUsers = new Map(); // Track connected users in memory
+const chatPageUsers = new Map(); // Track users specifically on chat page
 
 export const initIO = (server) => {
   io = new Server(server, {
@@ -37,15 +37,32 @@ export const initIO = (server) => {
         socket.userId = decoded.id;
         socket.join(decoded.id);
         
-        // Track connected user
-        connectedUsers.set(decoded.id, {
+        console.log(`User ${decoded.id} authenticated`);
+        
+      } catch (err) {
+        console.error("Authentication error:", err);
+        socket.disconnect();
+      }
+    });
+
+    // User enters chat page
+    socket.on("enterChatPage", async () => {
+      if (!socket.userId) {
+        console.log("User not authenticated for chat page");
+        return;
+      }
+
+      try {
+        // Add user to chat page users
+        chatPageUsers.set(socket.userId, {
           socketId: socket.id,
-          userId: decoded.id
+          userId: socket.userId,
+          enteredAt: new Date()
         });
         
-        // Update user status to online
+        // Update user status to online in database
         await UserStatus.findOneAndUpdate(
-          { userId: decoded.id },
+          { userId: socket.userId },
           { 
             isOnline: true,
             socketId: socket.id,
@@ -55,33 +72,54 @@ export const initIO = (server) => {
           { upsert: true, new: true }
         );
         
-        // Get ALL currently online users (from database for accuracy)
-        const onlineUsers = await UserStatus.find({ 
-          isOnline: true 
-        }).select('userId');
-        const onlineUserIds = onlineUsers.map(user => user.userId.toString());
+        // Get ALL users currently on chat page (from our Map)
+        const onlineUserIds = Array.from(chatPageUsers.keys());
         
-        console.log(`User ${decoded.id} authenticated, online users:`, onlineUserIds);
+        console.log(`User ${socket.userId} entered chat page, online users:`, onlineUserIds);
         
         // 1. Send current online users to the newly connected client
         socket.emit("onlineUsers", onlineUserIds);
         
         // 2. Notify ALL other clients that this user is now online
-        socket.broadcast.emit("userOnline", decoded.id);
+        socket.broadcast.emit("userOnline", socket.userId);
         
-      } catch (err) {
-        console.error("Authentication error:", err);
-        socket.disconnect();
+      } catch (error) {
+        console.error("Error entering chat page:", error);
       }
     });
 
-    // Add this new event handler for getting online users
+    // User leaves chat page (but socket might still be connected)
+    socket.on("leaveChatPage", async () => {
+      if (!socket.userId) return;
+
+      try {
+        // Remove user from chat page users
+        chatPageUsers.delete(socket.userId);
+        
+        // Update user status to offline in database
+        await UserStatus.findOneAndUpdate(
+          { userId: socket.userId },
+          { 
+            isOnline: false,
+            status: "offline",
+            lastSeen: new Date()
+          }
+        );
+        
+        // Notify ALL users that this user is offline
+        socket.broadcast.emit("userOffline", socket.userId);
+        
+        console.log(`User ${socket.userId} left chat page`);
+        
+      } catch (error) {
+        console.error("Error leaving chat page:", error);
+      }
+    });
+
+    // Get online users (only those on chat page)
     socket.on("getOnlineUsers", async () => {
       try {
-        const onlineUsers = await UserStatus.find({ 
-          isOnline: true 
-        }).select('userId');
-        const onlineUserIds = onlineUsers.map(user => user.userId.toString());
+        const onlineUserIds = Array.from(chatPageUsers.keys());
         socket.emit("onlineUsers", onlineUserIds);
         console.log(`Sent online users to ${socket.userId}:`, onlineUserIds);
       } catch (error) {
@@ -92,16 +130,14 @@ export const initIO = (server) => {
     // Request online status for specific users
     socket.on("requestUserStatus", async (userIds) => {
       try {
-        const userStatuses = await UserStatus.find({ 
-          userId: { $in: userIds } 
-        }).select('userId isOnline status lastSeen');
-        
         const statusMap = {};
-        userStatuses.forEach(status => {
-          statusMap[status.userId] = {
-            isOnline: status.isOnline,
-            status: status.status,
-            lastSeen: status.lastSeen
+        
+        userIds.forEach(userId => {
+          const isOnline = chatPageUsers.has(userId);
+          statusMap[userId] = {
+            isOnline,
+            status: isOnline ? "online" : "offline",
+            lastSeen: new Date() // You might want to store this separately
           };
         });
         
@@ -186,7 +222,7 @@ export const initIO = (server) => {
     });
 
     socket.on("userAway", async () => {
-      if (socket.userId) {
+      if (socket.userId && chatPageUsers.has(socket.userId)) {
         await UserStatus.findOneAndUpdate(
           { userId: socket.userId },
           { status: "away", lastSeen: new Date() }
@@ -196,7 +232,7 @@ export const initIO = (server) => {
     });
 
     socket.on("userBack", async () => {
-      if (socket.userId) {
+      if (socket.userId && chatPageUsers.has(socket.userId)) {
         await UserStatus.findOneAndUpdate(
           { userId: socket.userId },
           { status: "online", lastSeen: new Date() }
@@ -209,8 +245,8 @@ export const initIO = (server) => {
       console.log("User disconnected:", socket.id);
       
       if (socket.userId) {
-        // Remove from connected users map
-        connectedUsers.delete(socket.userId);
+        // Remove from chat page users
+        chatPageUsers.delete(socket.userId);
         
         // Update user status to offline
         await UserStatus.findOneAndUpdate(

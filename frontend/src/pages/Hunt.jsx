@@ -98,9 +98,9 @@ function Hunt() {
 
   // Location options
 const locationOptions = [
-  { value: "Random", description: "Pigeons from anywhere" },
-  { value: "Bangladesh", description: "Inside country pigeons" },
-  { value: "Global", description: "Outside country pigeons" },
+  { value: "Random", description: "Pigeons from all locations" },
+  { value: "Bangladesh", description: "Local pigeons from Bangladesh" },
+  { value: "Global", description: "International pigeons worldwide" },
 ];
 
   // Apply theme

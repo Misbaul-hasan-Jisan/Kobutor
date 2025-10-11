@@ -8,7 +8,7 @@ import DarkButton from "../components/darkbutton";
 import background from "../assets/homebg.png";
 import backgroundDark from "../assets/homebg-dark.png";
 
-// Initialize socket 
+// Initialize socket
 let socketInstance = null;
 
 const getSocket = () => {
@@ -20,7 +20,7 @@ const getSocket = () => {
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
-      timeout: 10000
+      timeout: 10000,
     });
 
     // Global event listeners (only set once)
@@ -43,19 +43,19 @@ const getSocket = () => {
 const REACTION_GROUPS = [
   ["❤️", "😂", "😮", "😢", "😡"],
   ["👍", "👎", "🎉", "🔥", "👏"],
-  ["🙏", "🤔", "🤯", "🥳", "💩"]
+  ["🙏", "🤔", "🤯", "🥳", "💩"],
 ];
 
 // Expanded Theme options with chat box colors
 const CHAT_THEMES = [
-  { 
-    id: "default", 
-    name: "Classic", 
+  {
+    id: "default",
+    name: "Classic",
     background: "bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900",
     chatBox: "from-yellow-400 to-orange-500",
     otherChatBox: "from-blue-400 to-purple-500",
     header: "from-yellow-400/10 to-transparent",
-    border: "border-yellow-400/30"
+    border: "border-yellow-400/30",
   },
   // ... (keep all your existing themes)
 ];
@@ -68,17 +68,20 @@ const generateAvatar = (userId, username) => {
     "from-green-400 to-teal-500",
     "from-purple-400 to-indigo-500",
     "from-orange-400 to-red-500",
-    "from-yellow-400 to-orange-500"
+    "from-yellow-400 to-orange-500",
   ];
-  
+
   const emojis = ["🐦", "🕊️", "🌟", "✨", "🔥", "💫", "🎯", "📮"];
-  
-  const colorIndex = userId?.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % colors.length;
-  const emojiIndex = username?.split('').reduce((a, b) => a + b.charCodeAt(0), 0) % emojis.length;
-  
+
+  const colorIndex =
+    userId?.split("").reduce((a, b) => a + b.charCodeAt(0), 0) % colors.length;
+  const emojiIndex =
+    username?.split("").reduce((a, b) => a + b.charCodeAt(0), 0) %
+    emojis.length;
+
   return {
     gradient: colors[colorIndex],
-    emoji: emojis[emojiIndex]
+    emoji: emojis[emojiIndex],
   };
 };
 
@@ -92,11 +95,17 @@ const StatusIndicator = ({ isOnline, isTyping }) => {
       </div>
     );
   }
-  
+
   return (
     <div className="flex items-center space-x-1">
-      <div className={`w-2 h-2 rounded-full ${isOnline ? 'bg-green-400' : 'bg-gray-400'}`}></div>
-      <span className="text-xs text-gray-400">{isOnline ? 'Online' : 'Offline'}</span>
+      <div
+        className={`w-2 h-2 rounded-full ${
+          isOnline ? "bg-green-400" : "bg-gray-400"
+        }`}
+      ></div>
+      <span className="text-xs text-gray-400">
+        {isOnline ? "Online" : "Offline"}
+      </span>
     </div>
   );
 };
@@ -105,11 +114,11 @@ const StatusIndicator = ({ isOnline, isTyping }) => {
 const MessageStatus = ({ status, readBy = [] }) => {
   const getStatusIcon = () => {
     switch (status) {
-      case 'sent':
+      case "sent":
         return <span className="text-gray-400 text-xs">✓</span>;
-      case 'delivered':
+      case "delivered":
         return <span className="text-gray-400 text-xs">✓✓</span>;
-      case 'read':
+      case "read":
         return <span className="text-blue-400 text-xs">✓✓</span>;
       default:
         return <span className="text-gray-300 text-xs">🕒</span>;
@@ -117,7 +126,10 @@ const MessageStatus = ({ status, readBy = [] }) => {
   };
 
   return (
-    <div className="flex items-center space-x-1" title={readBy.length > 0 ? `Seen by ${readBy.length}` : ''}>
+    <div
+      className="flex items-center space-x-1"
+      title={readBy.length > 0 ? `Seen by ${readBy.length}` : ""}
+    >
       {getStatusIcon()}
       {readBy.length > 0 && (
         <span className="text-xs text-gray-400">{readBy.length}</span>
@@ -197,7 +209,7 @@ function Chat() {
     if (socketConnected && currentUserId) {
       console.log("🚀 Entering chat page");
       socket.emit("enterChatPage");
-      
+
       // Request initial online users
       socket.emit("getOnlineUsers");
     }
@@ -231,16 +243,16 @@ function Chat() {
       }
     };
 
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [socket, currentUserId]);
 
   // Get current theme settings
   const getCurrentTheme = () => {
-    return CHAT_THEMES.find(t => t.id === currentTheme) || CHAT_THEMES[0];
+    return CHAT_THEMES.find((t) => t.id === currentTheme) || CHAT_THEMES[0];
   };
 
   const theme = getCurrentTheme();
@@ -269,16 +281,28 @@ function Chat() {
 
   // Update chat participants when activeChats changes
   useEffect(() => {
+    const token = localStorage.getItem("kobutor_token");
+    if (token) {
+      console.log("🔐 Authenticating socket...");
+      socket.emit("authenticate", token);
+
+      // Wait for authentication before entering chat page
+      socket.once("authenticated", () => {
+        console.log("✅ Authenticated, entering chat page...");
+        socket.emit("enterChatPage");
+        socket.emit("getOnlineUsers");
+      });
+    }
     const allParticipants = new Set();
-    activeChats.forEach(chat => {
-      chat.participants.forEach(participant => {
+    activeChats.forEach((chat) => {
+      chat.participants.forEach((participant) => {
         if (participant._id !== currentUserId) {
           allParticipants.add(participant._id);
         }
       });
     });
     setChatParticipants(allParticipants);
-    
+
     // Request status for all participants
     if (allParticipants.size > 0) {
       requestUserStatuses(Array.from(allParticipants));
@@ -289,19 +313,33 @@ function Chat() {
   const handlePinMessage = async (messageId) => {
     try {
       const token = localStorage.getItem("kobutor_token");
+      if (token) {
+        console.log("🔐 Authenticating socket...");
+        socket.emit("authenticate", token);
+
+        // Wait for authentication before entering chat page
+        socket.once("authenticated", () => {
+          console.log("✅ Authenticated, entering chat page...");
+          socket.emit("enterChatPage");
+          socket.emit("getOnlineUsers");
+        });
+      }
       const res = await fetch(
         `https://kobutor.onrender.com/api/chats/${selectedChat._id}/messages/${messageId}/pin`,
         {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
       if (res.ok) {
         const updatedMessage = await res.json();
-        setPinnedMessages(prev => [...prev.filter(msg => msg._id !== messageId), updatedMessage]);
+        setPinnedMessages((prev) => [
+          ...prev.filter((msg) => msg._id !== messageId),
+          updatedMessage,
+        ]);
       }
     } catch (error) {
       console.error("Error pinning message:", error);
@@ -311,18 +349,31 @@ function Chat() {
   const handleUnpinMessage = async (messageId) => {
     try {
       const token = localStorage.getItem("kobutor_token");
+      if (token) {
+        console.log("🔐 Authenticating socket...");
+        socket.emit("authenticate", token);
+
+        // Wait for authentication before entering chat page
+        socket.once("authenticated", () => {
+          console.log("✅ Authenticated, entering chat page...");
+          socket.emit("enterChatPage");
+          socket.emit("getOnlineUsers");
+        });
+      }
       const res = await fetch(
         `https://kobutor.onrender.com/api/chats/${selectedChat._id}/messages/${messageId}/unpin`,
         {
           method: "POST",
           headers: {
-            "Authorization": `Bearer ${token}`,
+            Authorization: `Bearer ${token}`,
           },
         }
       );
 
       if (res.ok) {
-        setPinnedMessages(prev => prev.filter(msg => msg._id !== messageId));
+        setPinnedMessages((prev) =>
+          prev.filter((msg) => msg._id !== messageId)
+        );
       }
     } catch (error) {
       console.error("Error unpinning message:", error);
@@ -331,12 +382,18 @@ function Chat() {
 
   // Pin Button Component
   const PinButton = ({ message }) => {
-    const isPinned = message.isPinned || 
-      (Array.isArray(pinnedMessages) && pinnedMessages.some(m => m._id === message._id));
-    
+    const isPinned =
+      message.isPinned ||
+      (Array.isArray(pinnedMessages) &&
+        pinnedMessages.some((m) => m._id === message._id));
+
     return (
       <button
-        onClick={() => isPinned ? handleUnpinMessage(message._id) : handlePinMessage(message._id)}
+        onClick={() =>
+          isPinned
+            ? handleUnpinMessage(message._id)
+            : handlePinMessage(message._id)
+        }
         className="text-xs p-1 hover:bg-black/20 rounded transition-all"
         title={isPinned ? "Unpin message" : "Pin message"}
       >
@@ -350,27 +407,27 @@ function Chat() {
     const avatar = generateAvatar(message.sender._id, message.sender.username);
     const isOnline = onlineUsers.has(message.sender._id);
     const currentTheme = getCurrentTheme();
-    
+
     const bubbleVariants = {
-      hidden: { 
-        opacity: 0, 
+      hidden: {
+        opacity: 0,
         y: isOwnMessage ? 20 : -20,
-        scale: 0.8 
+        scale: 0.8,
       },
-      visible: { 
-        opacity: 1, 
-        y: 0, 
+      visible: {
+        opacity: 1,
+        y: 0,
         scale: 1,
         transition: {
           type: "spring",
           stiffness: 500,
-          damping: 30
-        }
+          damping: 30,
+        },
       },
       animate: {
         scale: [1, 1.05, 1],
-        transition: { duration: 0.3 }
-      }
+        transition: { duration: 0.3 },
+      },
     };
 
     return (
@@ -386,10 +443,16 @@ function Chat() {
           </div>
         )}
 
-        <div className={`flex ${isOwnMessage ? "justify-end" : "justify-start"} items-end space-x-2`}>
+        <div
+          className={`flex ${
+            isOwnMessage ? "justify-end" : "justify-start"
+          } items-end space-x-2`}
+        >
           {!isOwnMessage && (
             <div className="relative">
-              <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-sm shadow-md`}>
+              <div
+                className={`w-8 h-8 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-sm shadow-md`}
+              >
                 {avatar.emoji}
               </div>
             </div>
@@ -408,53 +471,65 @@ function Chat() {
             {/* Enhanced Reactions */}
             {message.reactions && Object.keys(message.reactions).length > 0 && (
               <div className="flex flex-wrap gap-1 mb-2">
-                {Object.entries(message.reactions).map(([emoji, reactionData]) => {
-                  const usersArray = Array.isArray(reactionData) ? reactionData : reactionData.users || [];
-                  const userReacted = usersArray.includes(currentUserId);
-                  const reactionCount = Array.isArray(reactionData) ? reactionData.length : reactionData.count || usersArray.length;
+                {Object.entries(message.reactions).map(
+                  ([emoji, reactionData]) => {
+                    const usersArray = Array.isArray(reactionData)
+                      ? reactionData
+                      : reactionData.users || [];
+                    const userReacted = usersArray.includes(currentUserId);
+                    const reactionCount = Array.isArray(reactionData)
+                      ? reactionData.length
+                      : reactionData.count || usersArray.length;
 
-                  return (
-                    <motion.button
-                      key={emoji}
-                      whileHover={{ scale: 1.2 }}
-                      whileTap={{ scale: 0.9 }}
-                      onClick={() => handleToggleReaction(message._id, emoji)}
-                      className={`px-2 py-1 rounded-full text-xs transition-all flex items-center space-x-1 ${
-                        userReacted
-                          ? "bg-yellow-400 text-black shadow-md"
-                          : "bg-black/20 hover:bg-black/30"
-                      }`}
-                    >
-                      <span>{emoji}</span>
-                      <span>{reactionCount}</span>
-                    </motion.button>
-                  );
-                })}
+                    return (
+                      <motion.button
+                        key={emoji}
+                        whileHover={{ scale: 1.2 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => handleToggleReaction(message._id, emoji)}
+                        className={`px-2 py-1 rounded-full text-xs transition-all flex items-center space-x-1 ${
+                          userReacted
+                            ? "bg-yellow-400 text-black shadow-md"
+                            : "bg-black/20 hover:bg-black/30"
+                        }`}
+                      >
+                        <span>{emoji}</span>
+                        <span>{reactionCount}</span>
+                      </motion.button>
+                    );
+                  }
+                )}
               </div>
             )}
 
             <div className="flex justify-between items-center mt-1">
-              <span className={`text-xs ${isOwnMessage ? "text-black/60" : "text-white/60"}`}>
+              <span
+                className={`text-xs ${
+                  isOwnMessage ? "text-black/60" : "text-white/60"
+                }`}
+              >
                 {new Date(message.createdAt).toLocaleTimeString([], {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
               </span>
-              
+
               <div className="flex items-center space-x-2">
                 {isOwnMessage && (
-                  <MessageStatus 
-                    status={message.readBy?.length > 0 ? 'read' : 'delivered'} 
+                  <MessageStatus
+                    status={message.readBy?.length > 0 ? "read" : "delivered"}
                     readBy={message.readBy || []}
                   />
                 )}
-                
+
                 <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                   <PinButton message={message} />
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      setShowReactionPicker(showReactionPicker === message._id ? null : message._id);
+                      setShowReactionPicker(
+                        showReactionPicker === message._id ? null : message._id
+                      );
                     }}
                     className="text-xs p-1 hover:bg-black/20 rounded transition-all"
                     title="Add reaction"
@@ -468,7 +543,9 @@ function Chat() {
 
           {isOwnMessage && (
             <div className="relative">
-              <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-sm shadow-md`}>
+              <div
+                className={`w-8 h-8 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-sm shadow-md`}
+              >
                 {avatar.emoji}
               </div>
             </div>
@@ -483,9 +560,9 @@ function Chat() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.8, y: 10 }}
               className="absolute bg-black/90 backdrop-blur-md rounded-2xl p-3 shadow-2xl border border-white/20 z-20 mt-2"
-              style={{ 
-                left: isOwnMessage ? 'auto' : '0', 
-                right: isOwnMessage ? '0' : 'auto' 
+              style={{
+                left: isOwnMessage ? "auto" : "0",
+                right: isOwnMessage ? "0" : "auto",
               }}
             >
               <div className="grid grid-cols-5 gap-2">
@@ -538,7 +615,7 @@ function Chat() {
         >
           <h4 className="text-white font-semibold mb-3">Chat Themes</h4>
           <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
-            {CHAT_THEMES.map(theme => (
+            {CHAT_THEMES.map((theme) => (
               <motion.button
                 key={theme.id}
                 whileHover={{ scale: 1.05 }}
@@ -547,13 +624,17 @@ function Chat() {
                   setCurrentTheme(theme.id);
                   setShowThemePicker(false);
                 }}
-                className={`relative w-12 h-12 rounded-lg ${theme.background} border-2 ${
-                  currentTheme === theme.id ? 'border-yellow-400 ring-2 ring-yellow-200' : 'border-white/20'
+                className={`relative w-12 h-12 rounded-lg ${
+                  theme.background
+                } border-2 ${
+                  currentTheme === theme.id
+                    ? "border-yellow-400 ring-2 ring-yellow-200"
+                    : "border-white/20"
                 }`}
                 title={theme.name}
               >
                 <span className="absolute -top-2 -right-2 text-xs bg-black/50 rounded-full w-4 h-4 flex items-center justify-center">
-                  {currentTheme === theme.id ? '✓' : ''}
+                  {currentTheme === theme.id ? "✓" : ""}
                 </span>
               </motion.button>
             ))}
@@ -566,24 +647,31 @@ function Chat() {
   // Socket event handlers
   const handleMessagePinned = (data) => {
     if (selectedChat && data.chatId === selectedChat._id) {
-      setMessages(prev => 
-        prev.map(msg => 
-          msg._id === data.messageId 
-            ? { ...msg, isPinned: true, pinnedBy: data.pinnedBy, pinnedAt: data.pinnedAt }
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg._id === data.messageId
+            ? {
+                ...msg,
+                isPinned: true,
+                pinnedBy: data.pinnedBy,
+                pinnedAt: data.pinnedAt,
+              }
             : msg
         )
       );
-      
-      setPinnedMessages(prev => {
+
+      setPinnedMessages((prev) => {
         const currentPinned = Array.isArray(prev) ? prev : [];
-        const filtered = currentPinned.filter(msg => msg._id !== data.messageId);
-        
+        const filtered = currentPinned.filter(
+          (msg) => msg._id !== data.messageId
+        );
+
         const pinnedMsg = {
           _id: data.messageId,
           text: `Pinned message`,
           isPinned: true,
           pinnedBy: data.pinnedBy,
-          pinnedAt: data.pinnedAt
+          pinnedAt: data.pinnedAt,
         };
         return [...filtered, pinnedMsg];
       });
@@ -592,15 +680,17 @@ function Chat() {
 
   const handleMessageUnpinned = (data) => {
     if (selectedChat && data.chatId === selectedChat._id) {
-      setMessages(prev => 
-        prev.map(msg => 
-          msg._id === data.messageId 
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg._id === data.messageId
             ? { ...msg, isPinned: false, pinnedBy: null, pinnedAt: null }
             : msg
         )
       );
-      
-      setPinnedMessages(prev => prev.filter(msg => msg._id !== data.messageId));
+
+      setPinnedMessages((prev) =>
+        prev.filter((msg) => msg._id !== data.messageId)
+      );
     }
   };
 
@@ -611,12 +701,12 @@ function Chat() {
 
   const handleUserOnline = (userId) => {
     console.log("🟢 User came online:", userId);
-    setOnlineUsers(prev => new Set([...prev, userId]));
+    setOnlineUsers((prev) => new Set([...prev, userId]));
   };
 
   const handleUserOffline = (userId) => {
     console.log("🔴 User went offline:", userId);
-    setOnlineUsers(prev => {
+    setOnlineUsers((prev) => {
       const newSet = new Set(prev);
       newSet.delete(userId);
       return newSet;
@@ -625,13 +715,15 @@ function Chat() {
 
   const handleUserStatuses = (statusMap) => {
     console.log("📊 Received user statuses:", statusMap);
-    const onlineUserIds = Object.keys(statusMap).filter(userId => statusMap[userId].isOnline);
-    setOnlineUsers(prev => {
+    const onlineUserIds = Object.keys(statusMap).filter(
+      (userId) => statusMap[userId].isOnline
+    );
+    setOnlineUsers((prev) => {
       const newSet = new Set(prev);
       // Add online users
-      onlineUserIds.forEach(userId => newSet.add(userId));
+      onlineUserIds.forEach((userId) => newSet.add(userId));
       // Remove users that are offline
-      Object.keys(statusMap).forEach(userId => {
+      Object.keys(statusMap).forEach((userId) => {
         if (!statusMap[userId].isOnline) {
           newSet.delete(userId);
         }
@@ -683,11 +775,14 @@ function Chat() {
           const pinnedData = await pinnedRes.json();
           setPinnedMessages(Array.isArray(pinnedData) ? pinnedData : []);
         } else {
-          console.log('Pinned messages endpoint returned error:', pinnedRes.status);
+          console.log(
+            "Pinned messages endpoint returned error:",
+            pinnedRes.status
+          );
           setPinnedMessages([]);
         }
       } catch (pinnedError) {
-        console.log('Error fetching pinned messages:', pinnedError);
+        console.log("Error fetching pinned messages:", pinnedError);
         setPinnedMessages([]);
       }
 
@@ -696,7 +791,6 @@ function Chat() {
       if (allParticipantIds.length > 0) {
         requestUserStatuses(allParticipantIds);
       }
-
     } catch (error) {
       console.error("Error selecting chat:", error);
       setPinnedMessages([]);
@@ -909,11 +1003,11 @@ function Chat() {
   useEffect(() => {
     const handleReceiveMessage = (message) => {
       if (selectedChat && message.chatId === selectedChat._id) {
-        setMessages(prev => [...prev, { ...message, animate: true }]);
-        
+        setMessages((prev) => [...prev, { ...message, animate: true }]);
+
         setTimeout(() => {
-          setMessages(prev => 
-            prev.map(msg => 
+          setMessages((prev) =>
+            prev.map((msg) =>
               msg._id === message._id ? { ...msg, animate: false } : msg
             )
           );
@@ -977,7 +1071,7 @@ function Chat() {
     socket.on("chatDeleted", handleChatDeleted);
     socket.on("messageReaction", handleMessageReaction);
     socket.on("messagesRead", handleMessagesRead);
-    
+
     // Add the new pin/unpin and online/offline events
     socket.on("messagePinned", handleMessagePinned);
     socket.on("messageUnpinned", handleMessageUnpinned);
@@ -1015,24 +1109,28 @@ function Chat() {
 
       <div className="container mx-auto px-4 py-1 pt-10 h-[calc(100vh-80px)]">
         {/* Outer container with theme background */}
-        <div className={`max-w-7xl mx-auto h-full rounded-xl overflow-hidden ${theme.background}`}>
-          
+        <div
+          className={`max-w-7xl mx-auto h-full rounded-xl overflow-hidden ${theme.background}`}
+        >
           {/* Inner container with theme border */}
-          <div className={`w-full h-full backdrop-blur-md bg-black/40 flex flex-col ${theme.border} shadow-lg`}>
-            
+          <div
+            className={`w-full h-full backdrop-blur-md bg-black/40 flex flex-col ${theme.border} shadow-lg`}
+          >
             {/* Header with theme gradient */}
-            <div className={`p-4 border-b border-white/20 flex justify-between items-center bg-gradient-to-r ${theme.header}`}>
+            <div
+              className={`p-4 border-b border-white/20 flex justify-between items-center bg-gradient-to-r ${theme.header}`}
+            >
               <h1 className="text-2xl font-bold flex items-center">
                 <span className="mr-2">💬</span> Pigeon Chat
               </h1>
-              
+
               <div className="flex items-center space-x-4">
                 {isTyping && (
                   <span className="text-sm text-yellow-400 flex items-center">
                     <span className="animate-pulse mr-1">✍️</span> Typing...
                   </span>
                 )}
-                
+
                 <button
                   onClick={() => setShowThemePicker(!showThemePicker)}
                   className="p-2 hover:bg-white/10 rounded-lg transition-all"
@@ -1040,7 +1138,7 @@ function Chat() {
                 >
                   🎨
                 </button>
-                
+
                 <ThemeSelector />
               </div>
             </div>
@@ -1055,10 +1153,15 @@ function Chat() {
                   </div>
                 ) : activeChats.length > 0 ? (
                   activeChats.map((chat, index) => {
-                    const otherParticipant = chat.participants.find((p) => p._id !== currentUserId);
-                    const avatar = generateAvatar(otherParticipant?._id, otherParticipant?.username);
+                    const otherParticipant = chat.participants.find(
+                      (p) => p._id !== currentUserId
+                    );
+                    const avatar = generateAvatar(
+                      otherParticipant?._id,
+                      otherParticipant?.username
+                    );
                     const isOnline = onlineUsers.has(otherParticipant?._id);
-                    
+
                     return (
                       <div
                         key={`${chat._id}-${index}`}
@@ -1070,10 +1173,11 @@ function Chat() {
                         }`}
                       >
                         <div className="relative">
-                          <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-lg mr-3 shadow-md`}>
+                          <div
+                            className={`w-10 h-10 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-lg mr-3 shadow-md`}
+                          >
                             {avatar.emoji}
                           </div>
-                          
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold truncate">
@@ -1082,7 +1186,10 @@ function Chat() {
                           <p className="text-sm text-white/70 truncate">
                             {chat.lastMessage || "Start a conversation..."}
                           </p>
-                          <StatusIndicator isOnline={isOnline} isTyping={false} />
+                          <StatusIndicator
+                            isOnline={isOnline}
+                            isTyping={false}
+                          />
                         </div>
                         {chat.unreadCount > 0 && (
                           <span className="bg-yellow-400 text-black text-xs rounded-full h-5 w-5 flex items-center justify-center ml-2">
@@ -1096,7 +1203,9 @@ function Chat() {
                   <div className="p-4 text-center text-white/60 flex flex-col items-center">
                     <div className="text-4xl mb-4">📭</div>
                     <p className="mb-2">No active chats yet</p>
-                    <p className="text-sm mb-4">Release pigeons to connect with others</p>
+                    <p className="text-sm mb-4">
+                      Release pigeons to connect with others
+                    </p>
                     <button
                       onClick={() => navigate("/release")}
                       className="bg-gradient-to-r from-yellow-400 to-orange-500 text-black px-4 py-2 rounded-full text-sm font-semibold hover:from-yellow-300 hover:to-orange-400 transition-all shadow-md"
@@ -1111,19 +1220,30 @@ function Chat() {
               <div className="flex-1 flex flex-col bg-chat-pattern">
                 {selectedChat ? (
                   <>
-                    <div className={`p-4 border-b border-white/20 flex justify-between items-center bg-gradient-to-r ${theme.header}`}>
+                    <div
+                      className={`p-4 border-b border-white/20 flex justify-between items-center bg-gradient-to-r ${theme.header}`}
+                    >
                       <div className="flex items-center">
                         {(() => {
-                          const otherParticipant = selectedChat.participants.find((p) => p._id !== currentUserId);
-                          const avatar = generateAvatar(otherParticipant?._id, otherParticipant?.username);
-                          const isOnline = onlineUsers.has(otherParticipant?._id);
-                          
+                          const otherParticipant =
+                            selectedChat.participants.find(
+                              (p) => p._id !== currentUserId
+                            );
+                          const avatar = generateAvatar(
+                            otherParticipant?._id,
+                            otherParticipant?.username
+                          );
+                          const isOnline = onlineUsers.has(
+                            otherParticipant?._id
+                          );
+
                           return (
                             <div className="relative">
-                              <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-lg mr-3 shadow-md`}>
+                              <div
+                                className={`w-10 h-10 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-lg mr-3 shadow-md`}
+                              >
                                 {avatar.emoji}
                               </div>
-                              
                             </div>
                           );
                         })()}
@@ -1133,9 +1253,13 @@ function Chat() {
                               (p) => p._id !== currentUserId
                             )?.username || "Anonymous Pigeon"}
                           </h3>
-                          <StatusIndicator 
-                            isOnline={onlineUsers.has(selectedChat.participants.find(p => p._id !== currentUserId)?._id)} 
-                            isTyping={isTyping} 
+                          <StatusIndicator
+                            isOnline={onlineUsers.has(
+                              selectedChat.participants.find(
+                                (p) => p._id !== currentUserId
+                              )?._id
+                            )}
+                            isTyping={isTyping}
                           />
                         </div>
                       </div>
@@ -1158,7 +1282,10 @@ function Chat() {
                         </div>
                         <div className="space-y-2 max-h-32 overflow-y-auto">
                           {pinnedMessages.map((msg) => (
-                            <div key={msg._id} className="text-xs bg-black/30 rounded p-2 truncate flex justify-between items-center">
+                            <div
+                              key={msg._id}
+                              className="text-xs bg-black/30 rounded p-2 truncate flex justify-between items-center"
+                            >
                               <span>{msg.text}</span>
                               <button
                                 onClick={() => handleUnpinMessage(msg._id)}
@@ -1175,8 +1302,12 @@ function Chat() {
 
                     <div className="flex-1 overflow-y-auto p-4 space-y-4 messages-container">
                       {messages.map((msg, idx) => {
-                        const showDate = idx === 0 || formatDate(messages[idx - 1].createdAt) !== formatDate(msg.createdAt);
-                        const isOwnMessage = (msg.sender._id || msg.sender) === currentUserId;
+                        const showDate =
+                          idx === 0 ||
+                          formatDate(messages[idx - 1].createdAt) !==
+                            formatDate(msg.createdAt);
+                        const isOwnMessage =
+                          (msg.sender._id || msg.sender) === currentUserId;
 
                         return (
                           <MessageBubble
@@ -1195,11 +1326,19 @@ function Chat() {
                               💬
                             </div>
                           </div>
-                          <div className={`bg-gradient-to-r ${theme.otherChatBox} text-white rounded-2xl rounded-bl-none px-4 py-3 shadow-md`}>
+                          <div
+                            className={`bg-gradient-to-r ${theme.otherChatBox} text-white rounded-2xl rounded-bl-none px-4 py-3 shadow-md`}
+                          >
                             <div className="flex space-x-1">
                               <div className="w-2 h-2 bg-white/80 rounded-full animate-bounce"></div>
-                              <div className="w-2 h-2 bg-white/80 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
-                              <div className="w-2 h-2 bg-white/80 rounded-full animate-bounce" style={{ animationDelay: "0.4s" }}></div>
+                              <div
+                                className="w-2 h-2 bg-white/80 rounded-full animate-bounce"
+                                style={{ animationDelay: "0.2s" }}
+                              ></div>
+                              <div
+                                className="w-2 h-2 bg-white/80 rounded-full animate-bounce"
+                                style={{ animationDelay: "0.4s" }}
+                              ></div>
                             </div>
                           </div>
                         </div>
@@ -1208,7 +1347,10 @@ function Chat() {
                       <div ref={messagesEndRef} />
                     </div>
 
-                    <form onSubmit={handleSendMessage} className="p-4 border-t border-white/20 bg-black/30">
+                    <form
+                      onSubmit={handleSendMessage}
+                      className="p-4 border-t border-white/20 bg-black/30"
+                    >
                       <div className="flex space-x-2">
                         <input
                           type="text"
@@ -1231,8 +1373,12 @@ function Chat() {
                   <div className="flex-1 flex items-center justify-center text-white/60">
                     <div className="text-center">
                       <div className="text-6xl mb-4 animate-float">📨</div>
-                      <h3 className="text-xl mb-2 font-semibold">Select a chat to start messaging</h3>
-                      <p className="opacity-75">Connect with fellow pigeon enthusiasts</p>
+                      <h3 className="text-xl mb-2 font-semibold">
+                        Select a chat to start messaging
+                      </h3>
+                      <p className="opacity-75">
+                        Connect with fellow pigeon enthusiasts
+                      </p>
                     </div>
                   </div>
                 )}
@@ -1250,7 +1396,8 @@ function Chat() {
               <span className="mr-2">🗑️</span> Delete Chat?
             </h3>
             <p className="mb-6 text-gray-700 dark:text-gray-300">
-              This will remove the chat from your inbox. The other person will still be able to see the messages.
+              This will remove the chat from your inbox. The other person will
+              still be able to see the messages.
             </p>
             <div className="flex gap-4 justify-end">
               <button

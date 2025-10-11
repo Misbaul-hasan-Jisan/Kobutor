@@ -90,7 +90,7 @@ function ReleasePigeon() {
     // Wait for animation to complete before making API call
     setTimeout(async () => {
       try {
-        const res = await fetch('http://localhost:3000/api/pigeons', {
+        const res = await fetch('https://kobutor.onrender.com/api/pigeons', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

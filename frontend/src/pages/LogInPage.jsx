@@ -36,7 +36,7 @@ const handleLogin = async (e) => {
   setError("");
 
   try {
-    const response = await fetch("http://localhost:3000/api/auth/login/kobutor", {
+    const response = await fetch("https://kobutor.onrender.com/api/auth/login/kobutor", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

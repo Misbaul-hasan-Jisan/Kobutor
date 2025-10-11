@@ -14,7 +14,7 @@ let socketInstance = null;
 const getSocket = () => {
   if (!socketInstance) {
     console.log("🆕 Creating new socket instance");
-    socketInstance = io("http://localhost:3000", {
+    socketInstance = io("https://kobutor.onrender.com", {
       transports: ["websocket", "polling"],
       autoConnect: false,
       reconnection: true,
@@ -290,7 +290,7 @@ function Chat() {
     try {
       const token = localStorage.getItem("kobutor_token");
       const res = await fetch(
-        `http://localhost:3000/api/chats/${selectedChat._id}/messages/${messageId}/pin`,
+        `https://kobutor.onrender.com/api/chats/${selectedChat._id}/messages/${messageId}/pin`,
         {
           method: "POST",
           headers: {
@@ -312,7 +312,7 @@ function Chat() {
     try {
       const token = localStorage.getItem("kobutor_token");
       const res = await fetch(
-        `http://localhost:3000/api/chats/${selectedChat._id}/messages/${messageId}/unpin`,
+        `https://kobutor.onrender.com/api/chats/${selectedChat._id}/messages/${messageId}/unpin`,
         {
           method: "POST",
           headers: {
@@ -657,7 +657,7 @@ function Chat() {
       setSelectedChat(chat);
       const token = localStorage.getItem("kobutor_token");
       const res = await fetch(
-        `http://localhost:3000/api/chats/${chat._id}/messages`,
+        `https://kobutor.onrender.com/api/chats/${chat._id}/messages`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -673,7 +673,7 @@ function Chat() {
       // Fetch pinned messages for this chat
       try {
         const pinnedRes = await fetch(
-          `http://localhost:3000/api/chats/${chat._id}/pinned-messages`,
+          `https://kobutor.onrender.com/api/chats/${chat._id}/pinned-messages`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -716,7 +716,7 @@ function Chat() {
         const token = localStorage.getItem("kobutor_token");
 
         await fetch(
-          `http://localhost:3000/api/chats/${selectedChat._id}/read`,
+          `https://kobutor.onrender.com/api/chats/${selectedChat._id}/read`,
           {
             method: "POST",
             headers: {
@@ -762,7 +762,7 @@ function Chat() {
     try {
       const token = localStorage.getItem("kobutor_token");
       const res = await fetch(
-        `http://localhost:3000/api/chats/${selectedChat._id}/messages`,
+        `https://kobutor.onrender.com/api/chats/${selectedChat._id}/messages`,
         {
           method: "POST",
           headers: {
@@ -801,7 +801,7 @@ function Chat() {
     try {
       const token = localStorage.getItem("kobutor_token");
       const res = await fetch(
-        `http://localhost:3000/api/chats/${selectedChat._id}/messages/${messageId}/react`,
+        `https://kobutor.onrender.com/api/chats/${selectedChat._id}/messages/${messageId}/react`,
         {
           method: "POST",
           headers: {
@@ -838,7 +838,7 @@ function Chat() {
     try {
       const token = localStorage.getItem("kobutor_token");
       const res = await fetch(
-        `http://localhost:3000/api/chats/${selectedChat._id}`,
+        `https://kobutor.onrender.com/api/chats/${selectedChat._id}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
@@ -868,7 +868,7 @@ function Chat() {
       try {
         setLoading(true);
         const token = localStorage.getItem("kobutor_token");
-        const res = await fetch("http://localhost:3000/api/chats", {
+        const res = await fetch("https://kobutor.onrender.com/api/chats", {
           headers: { Authorization: `Bearer ${token}` },
         });
 

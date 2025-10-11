@@ -131,7 +131,7 @@ const locationOptions = [
       try {
         const token = localStorage.getItem("kobutor_token");
         const response = await fetch(
-          `http://localhost:3000/api/pigeons?location=${huntLocation}`,
+          `https://kobutor.onrender.com/api/pigeons?location=${huntLocation}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -175,7 +175,7 @@ const locationOptions = [
     try {
       const token = localStorage.getItem("kobutor_token");
       const res = await fetch(
-        `http://localhost:3000/api/pigeons/${selectedPigeon.id}/catch`,
+        `https://kobutor.onrender.com/api/pigeons/${selectedPigeon.id}/catch`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -201,7 +201,7 @@ const locationOptions = [
     try {
       const token = localStorage.getItem("kobutor_token");
       const response = await fetch(
-        `http://localhost:3000/api/pigeons?location=${huntLocation}`,
+        `https://kobutor.onrender.com/api/pigeons?location=${huntLocation}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

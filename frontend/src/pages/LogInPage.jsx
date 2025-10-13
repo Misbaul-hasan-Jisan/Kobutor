@@ -6,7 +6,8 @@ import { useNavigate } from "react-router-dom";
 import DarkButton from "../components/darkbutton";
 import background from "../assets/homebg.png";
 import backgroundDark from "../assets/homebg-dark.png";
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_BASE_URL;
+
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");

@@ -5,7 +5,7 @@ import Header from "../components/header";
 import DarkButton from "../components/darkbutton";
 import Footer from "../components/Footer";
 import { useNavigate } from "react-router-dom";
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_BASE_URL;
 
 // Import pigeon images
 import pigeonWhite from "../assets/pigeon-white.png";

@@ -9,7 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import pigeonWhite from '../assets/pigeon-white.png';
 import pigeonBlack from '../assets/pigeon-black.png';
 import pigeonBrown from '../assets/pigeon-brown.png';
-const API = import.meta.env.VITE_API_URL;
+const API = import.meta.env.VITE_API_BASE_URL;
+
 
 
 // Pigeon flying animation component

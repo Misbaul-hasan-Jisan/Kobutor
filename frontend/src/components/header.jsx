@@ -54,12 +54,14 @@ const Header = () => {
   const closeMenu = () => setMenuOpen(false);
 
   return (
-    <header className="bg-black/50 backdrop-blur-sm sticky top-0 z-50 text-white">
-      <div className="flex items-center justify-between px-6 py-4">
+    <header className="bg-black/50 backdrop-blur-sm sticky top-0 z-[60] text-white">
+      <div className="flex items-center justify-between px-6 py-4 relative">
         {/* Mobile Menu Toggle */}
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="text-2xl md:hidden focus:outline-none"
+          className={`text-2xl md:hidden focus:outline-none z-[70] relative transition-opacity duration-200 ${
+            menuOpen ? "opacity-100" : "opacity-90 hover:opacity-100"
+          }`}
         >
           {menuOpen ? "✕" : "☰"}
         </button>
@@ -120,11 +122,13 @@ const Header = () => {
       {/* Mobile Menu */}
       <div
         ref={menuRef}
-        className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-40 transform transition-transform duration-300 ${
+        className={`fixed inset-0 ${
+          menuOpen ? "bg-black/50" : "bg-black/0"
+        } backdrop-blur-sm z-[50] transform transition-all duration-300 ${
           menuOpen ? "translate-x-0" : "-translate-x-full"
         } md:hidden`}
       >
-        <div className="flex flex-col space-y-6 mt-20 px-6 text-lg font-medium">
+        <div className="flex flex-col space-y-6 mt-20 px-6 text-lg font-medium bg-black/90">
           <Link to="/" onClick={closeMenu}>Home</Link>
           {isLoggedIn && (
             <>

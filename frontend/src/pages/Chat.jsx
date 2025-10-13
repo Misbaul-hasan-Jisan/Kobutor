@@ -7,6 +7,7 @@ import Footer from "../components/Footer";
 import DarkButton from "../components/darkbutton";
 import background from "../assets/homebg.png";
 import backgroundDark from "../assets/homebg-dark.png";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 // Initialize socket
 let socketInstance = null;
@@ -14,7 +15,7 @@ let socketInstance = null;
 const getSocket = () => {
   if (!socketInstance) {
     console.log("🆕 Creating new socket instance");
-    socketInstance = io("https://kobutor.onrender.com", {
+    socketInstance = io(`${API}`, {
       transports: ["websocket", "polling"],
       autoConnect: false,
       reconnection: true,
@@ -325,7 +326,7 @@ function Chat() {
         });
       }
       const res = await fetch(
-        `https://kobutor.onrender.com/api/chats/${selectedChat._id}/messages/${messageId}/pin`,
+        `${API}/api/chats/${selectedChat._id}/messages/${messageId}/pin`,
         {
           method: "POST",
           headers: {
@@ -361,7 +362,7 @@ function Chat() {
         });
       }
       const res = await fetch(
-        `https://kobutor.onrender.com/api/chats/${selectedChat._id}/messages/${messageId}/unpin`,
+        `${API}/api/chats/${selectedChat._id}/messages/${messageId}/unpin`,
         {
           method: "POST",
           headers: {
@@ -749,7 +750,7 @@ function Chat() {
       setSelectedChat(chat);
       const token = localStorage.getItem("kobutor_token");
       const res = await fetch(
-        `https://kobutor.onrender.com/api/chats/${chat._id}/messages`,
+        `${API}/api/chats/${chat._id}/messages`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }
@@ -765,7 +766,7 @@ function Chat() {
       // Fetch pinned messages for this chat
       try {
         const pinnedRes = await fetch(
-          `https://kobutor.onrender.com/api/chats/${chat._id}/pinned-messages`,
+          `${API}/api/chats/${chat._id}/pinned-messages`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -810,7 +811,7 @@ function Chat() {
         const token = localStorage.getItem("kobutor_token");
 
         await fetch(
-          `https://kobutor.onrender.com/api/chats/${selectedChat._id}/read`,
+          `${API}/api/chats/${selectedChat._id}/read`,
           {
             method: "POST",
             headers: {
@@ -856,7 +857,7 @@ function Chat() {
     try {
       const token = localStorage.getItem("kobutor_token");
       const res = await fetch(
-        `https://kobutor.onrender.com/api/chats/${selectedChat._id}/messages`,
+        `${API}/api/chats/${selectedChat._id}/messages`,
         {
           method: "POST",
           headers: {
@@ -895,7 +896,7 @@ function Chat() {
     try {
       const token = localStorage.getItem("kobutor_token");
       const res = await fetch(
-        `https://kobutor.onrender.com/api/chats/${selectedChat._id}/messages/${messageId}/react`,
+        `${API}/api/chats/${selectedChat._id}/messages/${messageId}/react`,
         {
           method: "POST",
           headers: {
@@ -932,7 +933,7 @@ function Chat() {
     try {
       const token = localStorage.getItem("kobutor_token");
       const res = await fetch(
-        `https://kobutor.onrender.com/api/chats/${selectedChat._id}`,
+        `${API}/api/chats/${selectedChat._id}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
@@ -962,7 +963,7 @@ function Chat() {
       try {
         setLoading(true);
         const token = localStorage.getItem("kobutor_token");
-        const res = await fetch("https://kobutor.onrender.com/api/chats", {
+        const res = await fetch("${API}/api/chats", {
           headers: { Authorization: `Bearer ${token}` },
         });
 

@@ -6,6 +6,7 @@ import { useNavigate } from "react-router-dom";
 import DarkButton from "../components/darkbutton";
 import background from "../assets/homebg.png";
 import backgroundDark from "../assets/homebg-dark.png";
+const API = import.meta.env.VITE_API_URL;
 
 const SignupPage = () => {
   const [username, setUsername] = useState("");
@@ -42,7 +43,7 @@ const handleSignup = async (e) => {
   }
 
   try {
-    const response = await fetch("https://kobutor.onrender.com/api/auth/signup/kobutor", {
+    const response = await fetch(`${API}/api/auth/signup/kobutor`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ username, email, password }),

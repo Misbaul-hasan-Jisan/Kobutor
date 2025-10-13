@@ -9,6 +9,8 @@ import { useNavigate } from 'react-router-dom';
 import pigeonWhite from '../assets/pigeon-white.png';
 import pigeonBlack from '../assets/pigeon-black.png';
 import pigeonBrown from '../assets/pigeon-brown.png';
+const API = import.meta.env.VITE_API_URL;
+
 
 // Pigeon flying animation component
 const FlyingPigeon = ({ color, onAnimationEnd }) => {
@@ -90,7 +92,7 @@ function ReleasePigeon() {
     // Wait for animation to complete before making API call
     setTimeout(async () => {
       try {
-        const res = await fetch('https://kobutor.onrender.com/api/pigeons', {
+        const res = await fetch(`${API}/api/pigeons`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

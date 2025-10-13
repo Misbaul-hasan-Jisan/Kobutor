@@ -963,7 +963,7 @@ function Chat() {
       try {
         setLoading(true);
         const token = localStorage.getItem("kobutor_token");
-        const res = await fetch("${API}/api/chats", {
+        const res = await fetch(`${API}/api/chats`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 

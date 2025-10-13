@@ -7,7 +7,7 @@ import Footer from "../components/Footer";
 import DarkButton from "../components/darkbutton";
 import background from "../assets/homebg.png";
 import backgroundDark from "../assets/homebg-dark.png";
-const API = import.meta.env.VITE_API_BASE_URL;
+const API = import.meta.env.VITE_API_URL;
 
 // Initialize socket
 let socketInstance = null;

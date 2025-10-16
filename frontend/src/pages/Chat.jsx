@@ -7,6 +7,7 @@ import Footer from "../components/Footer";
 import DarkButton from "../components/darkbutton";
 import background from "../assets/homebg.png";
 import backgroundDark from "../assets/homebg-dark.png";
+
 const API = import.meta.env.VITE_API_BASE_URL;
 
 // Initialize socket
@@ -47,6 +48,24 @@ const REACTION_GROUPS = [
   ["🙏", "🤔", "🤯", "🥳", "💩"],
 ];
 
+// Pigeon Gifting System
+const PIGEON_GIFTS = {
+  SEEDS: { emoji: '🌱', name: 'Pigeon Seeds', cost: 10, description: 'A tasty treat for your feathered friend' },
+  GRAIN: { emoji: '🌾', name: 'Golden Grain', cost: 25, description: 'Premium nutrition for happy pigeons' },
+  GOLD: { emoji: '🥇', name: 'Gold Medal', cost: 100, description: 'Award your champion pigeon' },
+  HEART: { emoji: '💝', name: 'Pigeon Heart', cost: 50, description: 'Show your pigeon some love' },
+  CROWN: { emoji: '👑', name: 'Pigeon Crown', cost: 150, description: 'Royal treatment for your pigeon' }
+};
+
+// Chat Achievements
+const CHAT_ACHIEVEMENTS = {
+  FIRST_MESSAGE: { emoji: '✉️', name: 'First Pigeon', description: 'Send your first message' },
+  CHAT_MASTER: { emoji: '🏆', name: 'Chat Champion', description: 'Send 100 messages' },
+  REACTION_KING: { emoji: '❤️', name: 'Reaction Pro', description: 'Get 50 reactions on your messages' },
+  PIGEON_TAMER: { emoji: '🕊️', name: 'Pigeon Tamer', description: 'Chat with 10 different users' },
+  EARLY_BIRD: { emoji: '🌅', name: 'Early Bird', description: 'Send messages at 5 AM' }
+};
+
 // Expanded Theme options with chat box colors
 const CHAT_THEMES = [
   {
@@ -58,7 +77,42 @@ const CHAT_THEMES = [
     header: "from-yellow-400/10 to-transparent",
     border: "border-yellow-400/30",
   },
-  // ... (keep all your existing themes)
+  {
+    id: "nature",
+    name: "Nature",
+    background: "bg-gradient-to-br from-green-900 via-emerald-800 to-teal-900",
+    chatBox: "from-green-400 to-emerald-500",
+    otherChatBox: "from-teal-400 to-cyan-500",
+    header: "from-green-400/10 to-transparent",
+    border: "border-green-400/30",
+  },
+  {
+    id: "sunset",
+    name: "Sunset",
+    background: "bg-gradient-to-br from-orange-900 via-red-800 to-pink-900",
+    chatBox: "from-orange-400 to-red-500",
+    otherChatBox: "from-pink-400 to-rose-500",
+    header: "from-orange-400/10 to-transparent",
+    border: "border-orange-400/30",
+  },
+  {
+    id: "ocean",
+    name: "Ocean",
+    background: "bg-gradient-to-br from-blue-900 via-indigo-800 to-purple-900",
+    chatBox: "from-cyan-400 to-blue-500",
+    otherChatBox: "from-indigo-400 to-purple-500",
+    header: "from-cyan-400/10 to-transparent",
+    border: "border-cyan-400/30",
+  },
+  {
+    id: "midnight",
+    name: "Midnight",
+    background: "bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900",
+    chatBox: "from-gray-400 to-blue-400",
+    otherChatBox: "from-indigo-400 to-purple-400",
+    header: "from-gray-400/10 to-transparent",
+    border: "border-gray-400/30",
+  },
 ];
 
 // Avatar generator function
@@ -139,6 +193,328 @@ const MessageStatus = ({ status, readBy = [] }) => {
   );
 };
 
+// Mobile Chat Header with Swipe Indicator
+const MobileChatHeader = ({ username, isOnline, onBack, showSwipeHint, onProfileClick }) => (
+  <motion.div 
+    className="lg:hidden p-4 border-b border-white/20 bg-black/60 backdrop-blur-md flex items-center justify-between"
+    initial={{ y: -10 }}
+    animate={{ y: 0 }}
+  >
+    <div className="flex items-center space-x-3">
+      <button
+        onClick={onBack}
+        className="p-2 hover:bg-white/10 rounded-lg transition-all"
+      >
+        ←
+      </button>
+      <button 
+        onClick={onProfileClick}
+        className="flex items-center space-x-3"
+      >
+        <div>
+          <h3 className="font-semibold text-white text-left">{username}</h3>
+          <StatusIndicator isOnline={isOnline} isTyping={false} />
+        </div>
+      </button>
+    </div>
+    {showSwipeHint && (
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        className="text-xs text-yellow-400 flex items-center"
+      >
+        👆 Tap for info
+      </motion.div>
+    )}
+  </motion.div>
+);
+
+// User Profile Drawer for Mobile
+const UserProfileDrawer = ({ user, isOpen, onClose, isOnline, onSendGift }) => {
+  const avatar = generateAvatar(user?._id, user?.username);
+  
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={onClose}
+          />
+          <motion.div
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            exit={{ y: "100%" }}
+            transition={{ type: "spring", damping: 25 }}
+            className="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-xl rounded-t-3xl z-50 lg:hidden border-t border-white/20 p-6 max-h-[80vh] overflow-y-auto"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-white">Pigeon Profile</h3>
+              <button
+                onClick={onClose}
+                className="p-2 hover:bg-white/10 rounded-full transition-all"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="text-center mb-6">
+              <div className={`w-20 h-20 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-2xl mx-auto mb-4 shadow-lg`}>
+                {avatar.emoji}
+              </div>
+              <h4 className="text-white font-semibold text-lg">
+                {user?.username || "Anonymous Pigeon"}
+              </h4>
+              <div className="flex items-center justify-center space-x-2 mt-2">
+                <div className={`w-3 h-3 rounded-full ${isOnline ? 'bg-green-400' : 'bg-gray-400'}`} />
+                <span className="text-sm text-gray-300">
+                  {isOnline ? 'Online' : 'Offline'}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div className="bg-black/30 rounded-xl p-4">
+                <h5 className="text-white font-semibold mb-3">Chat Stats</h5>
+                <div className="grid grid-cols-3 gap-4 text-sm">
+                  <div className="text-center">
+                    <div className="text-yellow-400 font-bold text-lg">24</div>
+                    <div className="text-gray-400 text-xs">Messages</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-green-400 font-bold text-lg">3</div>
+                    <div className="text-gray-400 text-xs">Pigeons</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-blue-400 font-bold text-lg">12</div>
+                    <div className="text-gray-400 text-xs">Reactions</div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-black/30 rounded-xl p-4">
+                <h5 className="text-white font-semibold mb-3">Send a Gift</h5>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(PIGEON_GIFTS).slice(0, 4).map(([key, gift]) => (
+                    <motion.button
+                      key={key}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => onSendGift(key)}
+                      className="bg-yellow-400/20 text-yellow-400 py-2 rounded-lg font-semibold hover:bg-yellow-400/30 transition-all flex items-center justify-center space-x-2"
+                    >
+                      <span>{gift.emoji}</span>
+                      <span className="text-xs">{gift.cost}</span>
+                    </motion.button>
+                  ))}
+                </div>
+              </div>
+
+              <button className="w-full bg-red-500/20 text-red-400 py-3 rounded-xl font-semibold hover:bg-red-500/30 transition-all flex items-center justify-center space-x-2">
+                <span>🚫</span>
+                <span>Block Pigeon</span>
+              </button>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+};
+
+// Quick Reactions Bar for Mobile
+const QuickReactionsBar = ({ onReaction, isVisible }) => (
+  <AnimatePresence>
+    {isVisible && (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: 20 }}
+        className="fixed bottom-20 left-4 right-4 bg-black/90 backdrop-blur-md rounded-2xl p-3 border border-white/20 z-30 lg:hidden"
+      >
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-white text-sm font-semibold">Quick React</span>
+          <span className="text-xs text-gray-400">Tap to send</span>
+        </div>
+        <div className="grid grid-cols-5 gap-2">
+          {REACTION_GROUPS[0].map((emoji) => (
+            <motion.button
+              key={emoji}
+              whileTap={{ scale: 0.8 }}
+              onClick={() => onReaction(emoji)}
+              className="text-2xl p-2 hover:bg-white/10 rounded-xl transition-all active:scale-95"
+            >
+              {emoji}
+            </motion.button>
+          ))}
+        </div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
+
+// Connection Status Banner
+const ConnectionStatus = ({ isConnected, onReconnect }) => (
+  <AnimatePresence>
+    {!isConnected && (
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        className="bg-red-500/20 border border-red-400/30 text-red-400 px-4 py-2 text-sm text-center backdrop-blur-md"
+      >
+        <div className="flex items-center justify-center space-x-2">
+          <span>🔌</span>
+          <span>Connection lost</span>
+          <button
+            onClick={onReconnect}
+            className="underline hover:text-red-300 transition-colors"
+          >
+            Reconnect
+          </button>
+        </div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
+
+// Gift Sending Modal
+const GiftModal = ({ isOpen, onClose, onSendGift, recipient }) => {
+  const [selectedGift, setSelectedGift] = useState(null);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="bg-white dark:bg-gray-800 rounded-2xl p-6 max-w-md w-full border border-yellow-400/30"
+      >
+        <h3 className="text-xl font-bold mb-4 text-black dark:text-white flex items-center">
+          <span className="mr-2">🎁</span> Send a Pigeon Gift
+        </h3>
+        
+        <div className="grid grid-cols-2 gap-3 mb-6">
+          {Object.entries(PIGEON_GIFTS).map(([key, gift]) => (
+            <motion.button
+              key={key}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => setSelectedGift(key)}
+              className={`p-3 rounded-xl border-2 transition-all ${
+                selectedGift === key
+                  ? 'border-yellow-400 bg-yellow-400/20'
+                  : 'border-gray-300 dark:border-gray-600 hover:border-yellow-400'
+              }`}
+            >
+              <div className="text-2xl mb-1">{gift.emoji}</div>
+              <div className="text-sm font-semibold text-black dark:text-white">{gift.name}</div>
+              <div className="text-xs text-gray-600 dark:text-gray-400">{gift.cost} coins</div>
+            </motion.button>
+          ))}
+        </div>
+
+        {selectedGift && (
+          <div className="bg-yellow-400/10 rounded-lg p-3 mb-4">
+            <p className="text-sm text-yellow-800 dark:text-yellow-200">
+              {PIGEON_GIFTS[selectedGift].description}
+            </p>
+          </div>
+        )}
+
+        <div className="flex gap-3 justify-end">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => {
+              onSendGift(selectedGift);
+              onClose();
+            }}
+            disabled={!selectedGift}
+            className="px-4 py-2 bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-semibold"
+          >
+            Send Gift
+          </button>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// Achievement Unlocked Modal
+const AchievementModal = ({ achievement, isOpen, onClose }) => {
+  if (!isOpen || !achievement) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl p-6 max-w-sm w-full text-center text-white shadow-2xl"
+      >
+        <div className="text-6xl mb-4 animate-bounce">{achievement.emoji}</div>
+        <h3 className="text-2xl font-bold mb-2">Achievement Unlocked!</h3>
+        <h4 className="text-xl font-semibold mb-2">{achievement.name}</h4>
+        <p className="text-yellow-100 mb-4">{achievement.description}</p>
+        <button
+          onClick={onClose}
+          className="bg-white text-yellow-600 px-6 py-2 rounded-full font-semibold hover:bg-gray-100 transition-colors"
+        >
+          Awesome!
+        </button>
+      </motion.div>
+    </div>
+  );
+};
+
+// Theme Selector Component
+const ThemeSelector = ({ showThemePicker, setShowThemePicker, currentTheme, setCurrentTheme }) => (
+  <AnimatePresence>
+    {showThemePicker && (
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        className="absolute top-16 right-4 bg-black/90 backdrop-blur-md rounded-xl p-4 shadow-2xl border border-white/20 z-30 max-w-xs"
+      >
+        <h4 className="text-white font-semibold mb-3">Chat Themes</h4>
+        <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
+          {CHAT_THEMES.map((theme) => (
+            <motion.button
+              key={theme.id}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                setCurrentTheme(theme.id);
+                setShowThemePicker(false);
+              }}
+              className={`relative w-12 h-12 rounded-lg ${
+                theme.background
+              } border-2 ${
+                currentTheme === theme.id
+                  ? "border-yellow-400 ring-2 ring-yellow-200"
+                  : "border-white/20"
+              }`}
+              title={theme.name}
+            >
+              <span className="absolute -top-2 -right-2 text-xs bg-black/50 rounded-full w-4 h-4 flex items-center justify-center">
+                {currentTheme === theme.id ? "✓" : ""}
+              </span>
+            </motion.button>
+          ))}
+        </div>
+      </motion.div>
+    )}
+  </AnimatePresence>
+);
+
 function Chat() {
   const [isDark, setIsDark] = useState(false);
   const [messages, setMessages] = useState([]);
@@ -156,6 +532,16 @@ function Chat() {
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [socketConnected, setSocketConnected] = useState(false);
   const [connectionError, setConnectionError] = useState(null);
+  
+  // New mobile states
+  const [showUserProfile, setShowUserProfile] = useState(false);
+  const [showQuickReactions, setShowQuickReactions] = useState(false);
+  const [showGiftModal, setShowGiftModal] = useState(false);
+  const [showAchievement, setShowAchievement] = useState(false);
+  const [currentAchievement, setCurrentAchievement] = useState(null);
+  const [mobileView, setMobileView] = useState('chats');
+  const [showSwipeHint, setShowSwipeHint] = useState(true);
+
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
   const { chatId: initialChatId } = useParams();
@@ -164,9 +550,36 @@ function Chat() {
 
   const socket = getSocket();
 
+  // Auto-hide swipe hint
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSwipeHint(false);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Mobile view handler
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        if (selectedChat) {
+          setMobileView('messages');
+        } else {
+          setMobileView('chats');
+        }
+      } else {
+        setMobileView('chats');
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [selectedChat]);
+
   // Socket connection management
   useEffect(() => {
-    // Component-specific connection handlers
     const handleConnect = () => {
       console.log("✅ Socket connected in component");
       setSocketConnected(true);
@@ -184,12 +597,10 @@ function Chat() {
       setSocketConnected(false);
     };
 
-    // Add component listeners
     socket.on("connect", handleConnect);
     socket.on("connect_error", handleConnectError);
     socket.on("disconnect", handleDisconnect);
 
-    // Connect socket if not already connected
     if (!socket.connected) {
       console.log("🔄 Connecting socket from component...");
       socket.connect();
@@ -197,7 +608,6 @@ function Chat() {
       setSocketConnected(true);
     }
 
-    // Cleanup
     return () => {
       socket.off("connect", handleConnect);
       socket.off("connect_error", handleConnectError);
@@ -210,46 +620,9 @@ function Chat() {
     if (socketConnected && currentUserId) {
       console.log("🚀 Entering chat page");
       socket.emit("enterChatPage");
-
-      // Request initial online users
       socket.emit("getOnlineUsers");
     }
   }, [socketConnected, currentUserId, socket]);
-
-  // When component unmounts, leave chat page
-  useEffect(() => {
-    return () => {
-      if (socket && currentUserId) {
-        console.log("🚪 Leaving chat page");
-        socket.emit("leaveChatPage");
-      }
-    };
-  }, [socket, currentUserId]);
-
-  // Page visibility handler to detect when user navigates away
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) {
-        // User switched tabs or minimized window
-        if (socket && currentUserId) {
-          console.log("👋 Page hidden, leaving chat page");
-          socket.emit("leaveChatPage");
-        }
-      } else {
-        // User returned to the page
-        if (socket && currentUserId) {
-          console.log("🔙 Page visible, entering chat page");
-          socket.emit("enterChatPage");
-        }
-      }
-    };
-
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-    };
-  }, [socket, currentUserId]);
 
   // Get current theme settings
   const getCurrentTheme = () => {
@@ -284,16 +657,14 @@ function Chat() {
   useEffect(() => {
     const token = localStorage.getItem("kobutor_token");
     if (token) {
-      console.log("🔐 Authenticating socket...");
       socket.emit("authenticate", token);
 
-      // Wait for authentication before entering chat page
       socket.once("authenticated", () => {
-        console.log("✅ Authenticated, entering chat page...");
         socket.emit("enterChatPage");
         socket.emit("getOnlineUsers");
       });
     }
+    
     const allParticipants = new Set();
     activeChats.forEach((chat) => {
       chat.participants.forEach((participant) => {
@@ -304,106 +675,12 @@ function Chat() {
     });
     setChatParticipants(allParticipants);
 
-    // Request status for all participants
     if (allParticipants.size > 0) {
       requestUserStatuses(Array.from(allParticipants));
     }
   }, [activeChats, currentUserId]);
 
-  // Pin/Unpin functionality
-  const handlePinMessage = async (messageId) => {
-    try {
-      const token = localStorage.getItem("kobutor_token");
-      if (token) {
-        console.log("🔐 Authenticating socket...");
-        socket.emit("authenticate", token);
-
-        // Wait for authentication before entering chat page
-        socket.once("authenticated", () => {
-          console.log("✅ Authenticated, entering chat page...");
-          socket.emit("enterChatPage");
-          socket.emit("getOnlineUsers");
-        });
-      }
-      const res = await fetch(
-        `${API}/api/chats/${selectedChat._id}/messages/${messageId}/pin`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (res.ok) {
-        const updatedMessage = await res.json();
-        setPinnedMessages((prev) => [
-          ...prev.filter((msg) => msg._id !== messageId),
-          updatedMessage,
-        ]);
-      }
-    } catch (error) {
-      console.error("Error pinning message:", error);
-    }
-  };
-
-  const handleUnpinMessage = async (messageId) => {
-    try {
-      const token = localStorage.getItem("kobutor_token");
-      if (token) {
-        console.log("🔐 Authenticating socket...");
-        socket.emit("authenticate", token);
-
-        // Wait for authentication before entering chat page
-        socket.once("authenticated", () => {
-          console.log("✅ Authenticated, entering chat page...");
-          socket.emit("enterChatPage");
-          socket.emit("getOnlineUsers");
-        });
-      }
-      const res = await fetch(
-        `${API}/api/chats/${selectedChat._id}/messages/${messageId}/unpin`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      if (res.ok) {
-        setPinnedMessages((prev) =>
-          prev.filter((msg) => msg._id !== messageId)
-        );
-      }
-    } catch (error) {
-      console.error("Error unpinning message:", error);
-    }
-  };
-
-  // Pin Button Component
-  const PinButton = ({ message }) => {
-    const isPinned =
-      message.isPinned ||
-      (Array.isArray(pinnedMessages) &&
-        pinnedMessages.some((m) => m._id === message._id));
-
-    return (
-      <button
-        onClick={() =>
-          isPinned
-            ? handleUnpinMessage(message._id)
-            : handlePinMessage(message._id)
-        }
-        className="text-xs p-1 hover:bg-black/20 rounded transition-all"
-        title={isPinned ? "Unpin message" : "Pin message"}
-      >
-        {isPinned ? "📌" : "📍"}
-      </button>
-    );
-  };
-
-  // Enhanced Message Bubble Component with theme colors
+  // Enhanced Message Bubble Component for mobile
   const MessageBubble = ({ message, isOwnMessage, showDate }) => {
     const avatar = generateAvatar(message.sender._id, message.sender.username);
     const isOnline = onlineUsers.has(message.sender._id);
@@ -467,9 +744,15 @@ function Chat() {
                 : `bg-gradient-to-r ${currentTheme.otherChatBox} text-white rounded-bl-none`
             }`}
           >
-            <p className="mb-1 leading-relaxed">{message.text}</p>
+            {message.isGift && (
+              <div className="text-center mb-2">
+                <span className="text-2xl">{message.giftEmoji}</span>
+                <p className="text-xs text-yellow-600 font-semibold">Sent a gift!</p>
+              </div>
+            )}
+            
+            <p className="mb-1 leading-relaxed break-words">{message.text}</p>
 
-            {/* Enhanced Reactions */}
             {message.reactions && Object.keys(message.reactions).length > 0 && (
               <div className="flex flex-wrap gap-1 mb-2">
                 {Object.entries(message.reactions).map(
@@ -524,7 +807,6 @@ function Chat() {
                 )}
 
                 <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <PinButton message={message} />
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -553,7 +835,6 @@ function Chat() {
           )}
         </div>
 
-        {/* Enhanced Reaction Picker */}
         <AnimatePresence>
           {showReactionPicker === message._id && (
             <motion.div
@@ -590,147 +871,60 @@ function Chat() {
     );
   };
 
-  const requestUserStatuses = (userIds) => {
-    if (socketConnected && userIds.length > 0) {
-      console.log("📡 Requesting status for users:", userIds);
-      socket.emit("requestUserStatus", userIds);
+  // Mobile Back Handler
+  const handleMobileBack = () => {
+    setSelectedChat(null);
+    setMobileView('chats');
+  };
+
+  // Quick reaction handler
+  const handleQuickReaction = (emoji) => {
+    if (selectedChat && messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.sender._id !== currentUserId) {
+        handleToggleReaction(lastMessage._id, emoji);
+      }
     }
+    setShowQuickReactions(false);
   };
 
-  const handleManualReconnect = () => {
-    setConnectionError(null);
-    if (!socket.connected) {
-      socket.connect();
-    }
-  };
+  // Gift sending handler
+  const handleSendGift = async (giftType) => {
+    if (!selectedChat) return;
 
-  // Theme selector component with improved layout
-  const ThemeSelector = () => (
-    <AnimatePresence>
-      {showThemePicker && (
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -10 }}
-          className="absolute top-16 right-4 bg-black/90 backdrop-blur-md rounded-xl p-4 shadow-2xl border border-white/20 z-30 max-w-xs"
-        >
-          <h4 className="text-white font-semibold mb-3">Chat Themes</h4>
-          <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
-            {CHAT_THEMES.map((theme) => (
-              <motion.button
-                key={theme.id}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  setCurrentTheme(theme.id);
-                  setShowThemePicker(false);
-                }}
-                className={`relative w-12 h-12 rounded-lg ${
-                  theme.background
-                } border-2 ${
-                  currentTheme === theme.id
-                    ? "border-yellow-400 ring-2 ring-yellow-200"
-                    : "border-white/20"
-                }`}
-                title={theme.name}
-              >
-                <span className="absolute -top-2 -right-2 text-xs bg-black/50 rounded-full w-4 h-4 flex items-center justify-center">
-                  {currentTheme === theme.id ? "✓" : ""}
-                </span>
-              </motion.button>
-            ))}
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
-  );
-
-  // Socket event handlers
-  const handleMessagePinned = (data) => {
-    if (selectedChat && data.chatId === selectedChat._id) {
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg._id === data.messageId
-            ? {
-                ...msg,
-                isPinned: true,
-                pinnedBy: data.pinnedBy,
-                pinnedAt: data.pinnedAt,
-              }
-            : msg
-        )
-      );
-
-      setPinnedMessages((prev) => {
-        const currentPinned = Array.isArray(prev) ? prev : [];
-        const filtered = currentPinned.filter(
-          (msg) => msg._id !== data.messageId
-        );
-
-        const pinnedMsg = {
-          _id: data.messageId,
-          text: `Pinned message`,
-          isPinned: true,
-          pinnedBy: data.pinnedBy,
-          pinnedAt: data.pinnedAt,
-        };
-        return [...filtered, pinnedMsg];
-      });
-    }
-  };
-
-  const handleMessageUnpinned = (data) => {
-    if (selectedChat && data.chatId === selectedChat._id) {
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg._id === data.messageId
-            ? { ...msg, isPinned: false, pinnedBy: null, pinnedAt: null }
-            : msg
-        )
-      );
-
-      setPinnedMessages((prev) =>
-        prev.filter((msg) => msg._id !== data.messageId)
-      );
-    }
-  };
-
-  const handleOnlineUsers = (userIds) => {
-    console.log("📱 Received online users:", userIds);
-    setOnlineUsers(new Set(userIds));
-  };
-
-  const handleUserOnline = (userId) => {
-    console.log("🟢 User came online:", userId);
-    setOnlineUsers((prev) => new Set([...prev, userId]));
-  };
-
-  const handleUserOffline = (userId) => {
-    console.log("🔴 User went offline:", userId);
-    setOnlineUsers((prev) => {
-      const newSet = new Set(prev);
-      newSet.delete(userId);
-      return newSet;
-    });
-  };
-
-  const handleUserStatuses = (statusMap) => {
-    console.log("📊 Received user statuses:", statusMap);
-    const onlineUserIds = Object.keys(statusMap).filter(
-      (userId) => statusMap[userId].isOnline
-    );
-    setOnlineUsers((prev) => {
-      const newSet = new Set(prev);
-      // Add online users
-      onlineUserIds.forEach((userId) => newSet.add(userId));
-      // Remove users that are offline
-      Object.keys(statusMap).forEach((userId) => {
-        if (!statusMap[userId].isOnline) {
-          newSet.delete(userId);
+    try {
+      const token = localStorage.getItem("kobutor_token");
+      const gift = PIGEON_GIFTS[giftType];
+      
+      const res = await fetch(
+        `${API}/api/chats/${selectedChat._id}/messages`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ 
+            text: `Sent a ${gift.name} gift! ${gift.emoji}`,
+            isGift: true,
+            giftType: giftType,
+            giftEmoji: gift.emoji
+          }),
         }
-      });
-      return newSet;
-    });
+      );
+
+      if (res.ok) {
+        setNewMessage("");
+        // Show achievement if it's the first gift
+        if (!localStorage.getItem('sent_first_gift')) {
+          setCurrentAchievement(CHAT_ACHIEVEMENTS.FIRST_MESSAGE);
+          setShowAchievement(true);
+          localStorage.setItem('sent_first_gift', 'true');
+        }
+      }
+    } catch (error) {
+      console.error("Error sending gift:", error);
+    }
   };
 
   // Utility functions
@@ -763,7 +957,7 @@ function Chat() {
       socket.emit("joinChat", chat._id);
       markMessagesAsRead(data);
 
-      // Fetch pinned messages for this chat
+      // Fetch pinned messages
       try {
         const pinnedRes = await fetch(
           `${API}/api/chats/${chat._id}/pinned-messages`,
@@ -776,10 +970,6 @@ function Chat() {
           const pinnedData = await pinnedRes.json();
           setPinnedMessages(Array.isArray(pinnedData) ? pinnedData : []);
         } else {
-          console.log(
-            "Pinned messages endpoint returned error:",
-            pinnedRes.status
-          );
           setPinnedMessages([]);
         }
       } catch (pinnedError) {
@@ -787,10 +977,9 @@ function Chat() {
         setPinnedMessages([]);
       }
 
-      // Request status for ALL chat participants, not just the current one
-      const allParticipantIds = Array.from(chatParticipants);
-      if (allParticipantIds.length > 0) {
-        requestUserStatuses(allParticipantIds);
+      // Set mobile view
+      if (window.innerWidth < 1024) {
+        setMobileView('messages');
       }
     } catch (error) {
       console.error("Error selecting chat:", error);
@@ -873,6 +1062,13 @@ function Chat() {
       setNewMessage("");
       socket.emit("stopTyping", { chatId: selectedChat._id });
       setTyping(false);
+
+      // Show achievement for first message
+      if (!localStorage.getItem('sent_first_message')) {
+        setCurrentAchievement(CHAT_ACHIEVEMENTS.FIRST_MESSAGE);
+        setShowAchievement(true);
+        localStorage.setItem('sent_first_message', 'true');
+      }
     } catch (error) {
       console.error("Error sending message:", error);
     }
@@ -946,9 +1142,23 @@ function Chat() {
         );
         setSelectedChat(null);
         setShowDeleteConfirm(false);
+        setMobileView('chats');
       }
     } catch (error) {
       console.error("Error deleting chat:", error);
+    }
+  };
+
+  const requestUserStatuses = (userIds) => {
+    if (socketConnected && userIds.length > 0) {
+      socket.emit("requestUserStatus", userIds);
+    }
+  };
+
+  const handleManualReconnect = () => {
+    setConnectionError(null);
+    if (!socket.connected) {
+      socket.connect();
     }
   };
 
@@ -1000,7 +1210,7 @@ function Chat() {
     }
   }, [socket]);
 
-  // Comprehensive socket event listeners
+  // Socket event listeners
   useEffect(() => {
     const handleReceiveMessage = (message) => {
       if (selectedChat && message.chatId === selectedChat._id) {
@@ -1028,15 +1238,6 @@ function Chat() {
       }
     };
 
-    const handleChatDeleted = (data) => {
-      if (data.chatId === selectedChat?._id) {
-        setActiveChats((prev) =>
-          prev.filter((chat) => chat._id !== data.chatId)
-        );
-        setSelectedChat(null);
-      }
-    };
-
     const handleMessageReaction = (data) => {
       if (selectedChat && data.chatId === selectedChat._id) {
         setMessages((prev) =>
@@ -1049,54 +1250,40 @@ function Chat() {
       }
     };
 
-    const handleMessagesRead = (data) => {
-      if (selectedChat && data.chatId === selectedChat._id) {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            data.messageIds.includes(msg._id)
-              ? {
-                  ...msg,
-                  readBy: [...(msg.readBy || []), data.readBy],
-                  isRead: true,
-                }
-              : msg
-          )
-        );
-      }
+    const handleOnlineUsers = (userIds) => {
+      setOnlineUsers(new Set(userIds));
     };
 
-    // Add all socket event listeners
+    const handleUserOnline = (userId) => {
+      setOnlineUsers((prev) => new Set([...prev, userId]));
+    };
+
+    const handleUserOffline = (userId) => {
+      setOnlineUsers((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
+    };
+
     socket.on("receiveMessage", handleReceiveMessage);
     socket.on("typing", handleTyping);
     socket.on("stopTyping", handleStopTyping);
-    socket.on("chatDeleted", handleChatDeleted);
     socket.on("messageReaction", handleMessageReaction);
-    socket.on("messagesRead", handleMessagesRead);
-
-    // Add the new pin/unpin and online/offline events
-    socket.on("messagePinned", handleMessagePinned);
-    socket.on("messageUnpinned", handleMessageUnpinned);
     socket.on("onlineUsers", handleOnlineUsers);
     socket.on("userOnline", handleUserOnline);
     socket.on("userOffline", handleUserOffline);
-    socket.on("userStatuses", handleUserStatuses);
 
     return () => {
-      // Clean up all event listeners
       socket.off("receiveMessage", handleReceiveMessage);
       socket.off("typing", handleTyping);
       socket.off("stopTyping", handleStopTyping);
-      socket.off("chatDeleted", handleChatDeleted);
       socket.off("messageReaction", handleMessageReaction);
-      socket.off("messagesRead", handleMessagesRead);
-      socket.off("messagePinned", handleMessagePinned);
-      socket.off("messageUnpinned", handleMessageUnpinned);
       socket.off("onlineUsers", handleOnlineUsers);
       socket.off("userOnline", handleUserOnline);
       socket.off("userOffline", handleUserOffline);
-      socket.off("userStatuses", handleUserStatuses);
     };
-  }, [selectedChat, socket, messages]);
+  }, [selectedChat, socket]);
 
   return (
     <div
@@ -1108,30 +1295,56 @@ function Chat() {
       <Header />
       <DarkButton isDark={isDark} setIsDark={setIsDark} />
 
-      <div className="container mx-auto px-4 py-1 pt-10 h-[calc(100vh-80px)]">
-        {/* Outer container with theme background */}
+      <ConnectionStatus 
+        isConnected={socketConnected} 
+        onReconnect={handleManualReconnect}
+      />
+
+      <div className="container mx-auto px-0 lg:px-4 py-1 pt-10 h-[calc(100vh-80px)]">
+        {/* Mobile Navigation */}
+        <div className="lg:hidden flex border-b border-white/20 bg-black/40">
+          <button
+            onClick={() => setMobileView('chats')}
+            className={`flex-1 py-3 text-center font-semibold transition-all ${
+              mobileView === 'chats' 
+                ? 'bg-yellow-400 text-black' 
+                : 'text-white/70 hover:text-white'
+            }`}
+          >
+            💬 Chats
+          </button>
+          <button
+            onClick={() => selectedChat && setMobileView('messages')}
+            disabled={!selectedChat}
+            className={`flex-1 py-3 text-center font-semibold transition-all ${
+              mobileView === 'messages' 
+                ? 'bg-yellow-400 text-black' 
+                : 'text-white/70 hover:text-white disabled:opacity-50'
+            }`}
+          >
+            ✉️ Messages
+          </button>
+        </div>
+
         <div
-          className={`max-w-7xl mx-auto h-full rounded-xl overflow-hidden ${theme.background}`}
+          className={`max-w-7xl mx-auto h-full rounded-none lg:rounded-xl overflow-hidden ${theme.background}`}
         >
-          {/* Inner container with theme border */}
           <div
             className={`w-full h-full backdrop-blur-md bg-black/40 flex flex-col ${theme.border} shadow-lg`}
           >
-            {/* Header with theme gradient */}
+            {/* Desktop Header */}
             <div
-              className={`p-4 border-b border-white/20 flex justify-between items-center bg-gradient-to-r ${theme.header}`}
+              className={`p-4 border-b border-white/20 flex justify-between items-center bg-gradient-to-r ${theme.header} hidden lg:flex`}
             >
               <h1 className="text-2xl font-bold flex items-center">
                 <span className="mr-2">💬</span> Pigeon Chat
               </h1>
-
               <div className="flex items-center space-x-4">
                 {isTyping && (
                   <span className="text-sm text-yellow-400 flex items-center">
                     <span className="animate-pulse mr-1">✍️</span> Typing...
                   </span>
                 )}
-
                 <button
                   onClick={() => setShowThemePicker(!showThemePicker)}
                   className="p-2 hover:bg-white/10 rounded-lg transition-all"
@@ -1139,14 +1352,21 @@ function Chat() {
                 >
                   🎨
                 </button>
-
-                <ThemeSelector />
+                <ThemeSelector 
+                  showThemePicker={showThemePicker}
+                  setShowThemePicker={setShowThemePicker}
+                  currentTheme={currentTheme}
+                  setCurrentTheme={setCurrentTheme}
+                />
               </div>
             </div>
 
             <div className="flex flex-1 overflow-hidden">
-              {/* Chat list */}
-              <div className="w-1/3 border-r border-white/20 overflow-y-auto bg-black/30">
+              {/* Chat list - Hidden on mobile when in messages view */}
+              <div className={`
+                ${mobileView === 'chats' ? 'flex' : 'hidden'} 
+                lg:flex w-full lg:w-1/3 border-r border-white/20 overflow-y-auto bg-black/30 flex-col
+              `}>
                 {loading ? (
                   <div className="p-4 text-center text-white/60 flex flex-col items-center">
                     <div className="animate-bounce text-2xl mb-2">🐦</div>
@@ -1179,6 +1399,9 @@ function Chat() {
                           >
                             {avatar.emoji}
                           </div>
+                          <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-black ${
+                            isOnline ? 'bg-green-400' : 'bg-gray-400'
+                          }`} />
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold truncate">
@@ -1187,10 +1410,6 @@ function Chat() {
                           <p className="text-sm text-white/70 truncate">
                             {chat.lastMessage || "Start a conversation..."}
                           </p>
-                          <StatusIndicator
-                            isOnline={isOnline}
-                            isTyping={false}
-                          />
                         </div>
                         {chat.unreadCount > 0 && (
                           <span className="bg-yellow-400 text-black text-xs rounded-full h-5 w-5 flex items-center justify-center ml-2">
@@ -1201,7 +1420,7 @@ function Chat() {
                     );
                   })
                 ) : (
-                  <div className="p-4 text-center text-white/60 flex flex-col items-center">
+                  <div className="p-4 text-center text-white/60 flex flex-col items-center justify-center h-full">
                     <div className="text-4xl mb-4">📭</div>
                     <p className="mb-2">No active chats yet</p>
                     <p className="text-sm mb-4">
@@ -1218,61 +1437,25 @@ function Chat() {
               </div>
 
               {/* Messages area */}
-              <div className="flex-1 flex flex-col bg-chat-pattern">
+              <div className={`
+                ${mobileView === 'messages' ? 'flex' : 'hidden'} 
+                lg:flex flex-1 flex-col bg-chat-pattern relative
+              `}>
                 {selectedChat ? (
                   <>
-                    <div
-                      className={`p-4 border-b border-white/20 flex justify-between items-center bg-gradient-to-r ${theme.header}`}
-                    >
-                      <div className="flex items-center">
-                        {(() => {
-                          const otherParticipant =
-                            selectedChat.participants.find(
-                              (p) => p._id !== currentUserId
-                            );
-                          const avatar = generateAvatar(
-                            otherParticipant?._id,
-                            otherParticipant?.username
-                          );
-                          const isOnline = onlineUsers.has(
-                            otherParticipant?._id
-                          );
-
-                          return (
-                            <div className="relative">
-                              <div
-                                className={`w-10 h-10 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-lg mr-3 shadow-md`}
-                              >
-                                {avatar.emoji}
-                              </div>
-                            </div>
-                          );
-                        })()}
-                        <div>
-                          <h3 className="font-semibold text-white">
-                            {selectedChat.participants.find(
-                              (p) => p._id !== currentUserId
-                            )?.username || "Anonymous Pigeon"}
-                          </h3>
-                          <StatusIndicator
-                            isOnline={onlineUsers.has(
-                              selectedChat.participants.find(
-                                (p) => p._id !== currentUserId
-                              )?._id
-                            )}
-                            isTyping={isTyping}
-                          />
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => setShowDeleteConfirm(true)}
-                        className="text-red-400 hover:text-red-300 p-2 transition-transform hover:scale-110"
-                        title="Delete chat"
-                      >
-                        🗑️
-                      </button>
-                    </div>
+                    <MobileChatHeader
+                      username={selectedChat.participants.find(
+                        (p) => p._id !== currentUserId
+                      )?.username || "Anonymous Pigeon"}
+                      isOnline={onlineUsers.has(
+                        selectedChat.participants.find(
+                          (p) => p._id !== currentUserId
+                        )?._id
+                      )}
+                      onBack={handleMobileBack}
+                      showSwipeHint={showSwipeHint}
+                      onProfileClick={() => setShowUserProfile(true)}
+                    />
 
                     {/* Pinned Messages Section */}
                     {pinnedMessages.length > 0 && (
@@ -1353,6 +1536,13 @@ function Chat() {
                       className="p-4 border-t border-white/20 bg-black/30"
                     >
                       <div className="flex space-x-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowQuickReactions(!showQuickReactions)}
+                          className="p-2 hover:bg-white/10 rounded-full transition-all"
+                        >
+                          😊
+                        </button>
                         <input
                           type="text"
                           value={newMessage}
@@ -1389,9 +1579,41 @@ function Chat() {
         </div>
       </div>
 
+      {/* Mobile Components */}
+      <UserProfileDrawer
+        user={selectedChat?.participants.find(p => p._id !== currentUserId)}
+        isOpen={showUserProfile}
+        onClose={() => setShowUserProfile(false)}
+        isOnline={onlineUsers.has(
+          selectedChat?.participants.find(p => p._id !== currentUserId)?._id
+        )}
+        onSendGift={() => {
+          setShowUserProfile(false);
+          setShowGiftModal(true);
+        }}
+      />
+
+      <QuickReactionsBar
+        onReaction={handleQuickReaction}
+        isVisible={showQuickReactions}
+      />
+
+      <GiftModal
+        isOpen={showGiftModal}
+        onClose={() => setShowGiftModal(false)}
+        onSendGift={handleSendGift}
+        recipient={selectedChat?.participants.find(p => p._id !== currentUserId)}
+      />
+
+      <AchievementModal
+        achievement={currentAchievement}
+        isOpen={showAchievement}
+        onClose={() => setShowAchievement(false)}
+      />
+
       {/* Delete confirmation modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-md mx-4 border border-yellow-400/30">
             <h3 className="text-xl font-bold mb-4 text-black dark:text-white flex items-center">
               <span className="mr-2">🗑️</span> Delete Chat?
@@ -1403,7 +1625,7 @@ function Chat() {
             <div className="flex gap-4 justify-end">
               <button
                 onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 border border-gray-300 rounded text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
                 Cancel
               </button>
@@ -1453,6 +1675,30 @@ function Chat() {
         
         .messages-container::-webkit-scrollbar-thumb:hover {
           background: rgba(255,255,255,0.5);
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 1024px) {
+          .container {
+            padding-left: 0;
+            padding-right: 0;
+          }
+          
+          .messages-container {
+            padding: 1rem;
+          }
+        }
+
+        /* Improved touch targets for mobile */
+        @media (max-width: 768px) {
+          button, [role="button"] {
+            min-height: 44px;
+            min-width: 44px;
+          }
+          
+          input, textarea {
+            font-size: 16px; /* Prevents zoom on iOS */
+          }
         }
       `}</style>
     </div>

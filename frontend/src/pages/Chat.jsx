@@ -66,53 +66,107 @@ const CHAT_ACHIEVEMENTS = {
   EARLY_BIRD: { emoji: '🌅', name: 'Early Bird', description: 'Send messages at 5 AM' }
 };
 
-// Expanded Theme options with chat box colors
+// Expanded Theme options with chat box colors (from previous code)
 const CHAT_THEMES = [
-  {
-    id: "default",
-    name: "Classic",
+  { 
+    id: "default", 
+    name: "Classic", 
     background: "bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900",
     chatBox: "from-yellow-400 to-orange-500",
     otherChatBox: "from-blue-400 to-purple-500",
     header: "from-yellow-400/10 to-transparent",
-    border: "border-yellow-400/30",
+    border: "border-yellow-400/30"
   },
-  {
-    id: "nature",
-    name: "Nature",
-    background: "bg-gradient-to-br from-green-900 via-emerald-800 to-teal-900",
-    chatBox: "from-green-400 to-emerald-500",
+  { 
+    id: "sunset", 
+    name: "Sunset", 
+    background: "bg-gradient-to-br from-orange-400 via-red-500 to-purple-600",
+    chatBox: "from-orange-300 to-red-400",
+    otherChatBox: "from-purple-400 to-pink-500",
+    header: "from-orange-400/20 to-transparent",
+    border: "border-orange-400/30"
+  },
+  { 
+    id: "ocean", 
+    name: "Ocean", 
+    background: "bg-gradient-to-br from-blue-400 via-teal-500 to-green-600",
+    chatBox: "from-cyan-300 to-blue-400",
+    otherChatBox: "from-teal-400 to-green-500",
+    header: "from-cyan-400/20 to-transparent",
+    border: "border-cyan-400/30"
+  },
+  { 
+    id: "forest", 
+    name: "Forest", 
+    background: "bg-gradient-to-br from-green-500 via-emerald-600 to-teal-700",
+    chatBox: "from-emerald-300 to-green-400",
     otherChatBox: "from-teal-400 to-cyan-500",
-    header: "from-green-400/10 to-transparent",
-    border: "border-green-400/30",
+    header: "from-emerald-400/20 to-transparent",
+    border: "border-emerald-400/30"
   },
-  {
-    id: "sunset",
-    name: "Sunset",
-    background: "bg-gradient-to-br from-orange-900 via-red-800 to-pink-900",
-    chatBox: "from-orange-400 to-red-500",
-    otherChatBox: "from-pink-400 to-rose-500",
-    header: "from-orange-400/10 to-transparent",
-    border: "border-orange-400/30",
+  { 
+    id: "berry", 
+    name: "Berry", 
+    background: "bg-gradient-to-br from-pink-500 via-purple-600 to-indigo-700",
+    chatBox: "from-pink-300 to-rose-400",
+    otherChatBox: "from-purple-400 to-indigo-500",
+    header: "from-pink-400/20 to-transparent",
+    border: "border-pink-400/30"
   },
-  {
-    id: "ocean",
-    name: "Ocean",
-    background: "bg-gradient-to-br from-blue-900 via-indigo-800 to-purple-900",
-    chatBox: "from-cyan-400 to-blue-500",
+  { 
+    id: "fire", 
+    name: "Fire", 
+    background: "bg-gradient-to-br from-red-500 via-orange-600 to-yellow-600",
+    chatBox: "from-red-300 to-orange-400",
+    otherChatBox: "from-orange-400 to-yellow-500",
+    header: "from-red-400/20 to-transparent",
+    border: "border-red-400/30"
+  },
+  { 
+    id: "ice", 
+    name: "Ice", 
+    background: "bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600",
+    chatBox: "from-cyan-200 to-blue-300",
+    otherChatBox: "from-blue-300 to-indigo-400",
+    header: "from-cyan-400/20 to-transparent",
+    border: "border-cyan-400/30"
+  },
+  { 
+    id: "lavender", 
+    name: "Lavender", 
+    background: "bg-gradient-to-br from-purple-400 via-violet-500 to-purple-700",
+    chatBox: "from-violet-300 to-purple-400",
+    otherChatBox: "from-purple-400 to-indigo-500",
+    header: "from-violet-400/20 to-transparent",
+    border: "border-violet-400/30"
+  },
+  { 
+    id: "sunrise", 
+    name: "Sunrise", 
+    background: "bg-gradient-to-br from-yellow-300 via-orange-400 to-pink-500",
+    chatBox: "from-yellow-200 to-orange-300",
+    otherChatBox: "from-orange-300 to-pink-400",
+    header: "from-yellow-400/20 to-transparent",
+    border: "border-yellow-400/30"
+  },
+  { 
+    id: "midnight", 
+    name: "Midnight", 
+    background: "bg-gradient-to-br from-gray-800 via-blue-900 to-purple-900",
+    chatBox: "from-blue-300 to-indigo-400",
     otherChatBox: "from-indigo-400 to-purple-500",
-    header: "from-cyan-400/10 to-transparent",
-    border: "border-cyan-400/30",
+    header: "from-blue-400/20 to-transparent",
+    border: "border-blue-400/30"
   },
-  {
-    id: "midnight",
-    name: "Midnight",
-    background: "bg-gradient-to-br from-gray-900 via-blue-900 to-indigo-900",
-    chatBox: "from-gray-400 to-blue-400",
-    otherChatBox: "from-indigo-400 to-purple-400",
-    header: "from-gray-400/10 to-transparent",
-    border: "border-gray-400/30",
-  },
+  { 
+    id: "blackhole", 
+    name: "Blackhole", 
+    background: "bg-gradient-to-br from-gray-800 via-black-900 to-gray-900",
+    chatBox: "from-gray-200 to-black/50",
+    otherChatBox: "from-gray-600 to-black/50",
+    header: "from-black-400/20 to-transparent",
+    border: "border-black-400/30"
+  }
 ];
 
 // Avatar generator function
@@ -193,8 +247,23 @@ const MessageStatus = ({ status, readBy = [] }) => {
   );
 };
 
-// Mobile Chat Header with Swipe Indicator
-const MobileChatHeader = ({ username, isOnline, onBack, showSwipeHint, onProfileClick }) => (
+// Pin Button Component (from previous code)
+const PinButton = ({ message, onPin, onUnpin }) => {
+  const isPinned = message.isPinned;
+  
+  return (
+    <button
+      onClick={() => isPinned ? onUnpin(message._id) : onPin(message._id)}
+      className="text-xs p-1 hover:bg-black/20 rounded transition-all"
+      title={isPinned ? "Unpin message" : "Pin message"}
+    >
+      {isPinned ? "📌" : "📍"}
+    </button>
+  );
+};
+
+// Mobile Chat Header with Theme Option
+const MobileChatHeader = ({ username, isOnline, onBack, showSwipeHint, onProfileClick, onThemeClick }) => (
   <motion.div 
     className="lg:hidden p-4 border-b border-white/20 bg-black/60 backdrop-blur-md flex items-center justify-between"
     initial={{ y: -10 }}
@@ -217,20 +286,30 @@ const MobileChatHeader = ({ username, isOnline, onBack, showSwipeHint, onProfile
         </div>
       </button>
     </div>
-    {showSwipeHint && (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="text-xs text-yellow-400 flex items-center"
+    
+    <div className="flex items-center space-x-2">
+      {showSwipeHint && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="text-xs text-yellow-400 flex items-center"
+        >
+          👆 Tap for info
+        </motion.div>
+      )}
+      <button
+        onClick={onThemeClick}
+        className="p-2 hover:bg-white/10 rounded-lg transition-all"
+        title="Change theme"
       >
-        👆 Tap for info
-      </motion.div>
-    )}
+        🎨
+      </button>
+    </div>
   </motion.div>
 );
 
-// User Profile Drawer for Mobile
-const UserProfileDrawer = ({ user, isOpen, onClose, isOnline, onSendGift }) => {
+// User Profile Drawer for Mobile with Theme Option
+const UserProfileDrawer = ({ user, isOpen, onClose, isOnline, onSendGift, onThemeClick }) => {
   const avatar = generateAvatar(user?._id, user?.username);
   
   return (
@@ -277,6 +356,14 @@ const UserProfileDrawer = ({ user, isOpen, onClose, isOnline, onSendGift }) => {
             </div>
 
             <div className="space-y-4">
+              <button
+                onClick={onThemeClick}
+                className="w-full bg-purple-500/20 text-purple-400 py-3 rounded-xl font-semibold hover:bg-purple-500/30 transition-all flex items-center justify-center space-x-2"
+              >
+                <span>🎨</span>
+                <span>Change Theme</span>
+              </button>
+
               <div className="bg-black/30 rounded-xl p-4">
                 <h5 className="text-white font-semibold mb-3">Chat Stats</h5>
                 <div className="grid grid-cols-3 gap-4 text-sm">
@@ -322,6 +409,80 @@ const UserProfileDrawer = ({ user, isOpen, onClose, isOnline, onSendGift }) => {
       )}
     </AnimatePresence>
   );
+};
+
+// Mobile Theme Selector Modal
+const MobileThemeSelector = ({ isOpen, onClose, currentTheme, setCurrentTheme }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black/70 flex items-end justify-center z-50 lg:hidden">
+      <motion.div
+        initial={{ y: "100%" }}
+        animate={{ y: 0 }}
+        exit={{ y: "100%" }}
+        transition={{ type: "spring", damping: 25 }}
+        className="bg-gray-900/95 backdrop-blur-xl rounded-t-3xl w-full max-w-2xl border-t border-white/20 p-6 max-h-[80vh] overflow-y-auto"
+      >
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-xl font-bold text-white">Choose Theme</h3>
+          <button
+            onClick={onClose}
+            className="p-2 hover:bg-white/10 rounded-full transition-all"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          {CHAT_THEMES.map((theme) => (
+            <motion.button
+              key={theme.id}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => {
+                setCurrentTheme(theme.id);
+                onClose();
+              }}
+              className={`relative h-20 rounded-xl ${theme.background} border-2 ${
+                currentTheme === theme.id
+                  ? "border-yellow-400 ring-2 ring-yellow-200"
+                  : "border-white/20"
+              } flex flex-col items-center justify-center p-2`}
+            >
+              <span className="text-white text-xs font-semibold mb-1">
+                {theme.name}
+              </span>
+              <div className="flex space-x-1">
+                <div className={`w-3 h-3 rounded-full ${theme.chatBox.split(' ')[1]}`}></div>
+                <div className={`w-3 h-3 rounded-full ${theme.otherChatBox.split(' ')[1]}`}></div>
+              </div>
+              <span className="absolute -top-2 -right-2 text-xs bg-black/70 rounded-full w-6 h-6 flex items-center justify-center text-yellow-400">
+                {currentTheme === theme.id ? "✓" : ""}
+              </span>
+            </motion.button>
+          ))}
+        </div>
+
+        <div className="mt-6 p-4 bg-black/30 rounded-xl">
+          <h4 className="text-white font-semibold mb-2">Preview</h4>
+          <div className="flex space-x-2">
+            <div className={`flex-1 p-3 rounded-lg ${getCurrentTheme(currentTheme).chatBox} text-black text-sm`}>
+              Your message
+            </div>
+            <div className={`flex-1 p-3 rounded-lg ${getCurrentTheme(currentTheme).otherChatBox} text-white text-sm`}>
+              Their message
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
+// Helper function to get current theme
+const getCurrentTheme = (themeId) => {
+  return CHAT_THEMES.find((t) => t.id === themeId) || CHAT_THEMES[0];
 };
 
 // Quick Reactions Bar for Mobile
@@ -474,7 +635,7 @@ const AchievementModal = ({ achievement, isOpen, onClose }) => {
   );
 };
 
-// Theme Selector Component
+// Enhanced Theme Selector Component for Desktop
 const ThemeSelector = ({ showThemePicker, setShowThemePicker, currentTheme, setCurrentTheme }) => (
   <AnimatePresence>
     {showThemePicker && (
@@ -482,7 +643,7 @@ const ThemeSelector = ({ showThemePicker, setShowThemePicker, currentTheme, setC
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -10 }}
-        className="absolute top-16 right-4 bg-black/90 backdrop-blur-md rounded-xl p-4 shadow-2xl border border-white/20 z-30 max-w-xs"
+        className="absolute top-16 right-4 bg-black/90 backdrop-blur-md rounded-xl p-4 shadow-2xl border border-white/20 z-30 max-w-xs hidden lg:block"
       >
         <h4 className="text-white font-semibold mb-3">Chat Themes</h4>
         <div className="grid grid-cols-3 gap-2 max-h-60 overflow-y-auto">
@@ -541,6 +702,7 @@ function Chat() {
   const [currentAchievement, setCurrentAchievement] = useState(null);
   const [mobileView, setMobileView] = useState('chats');
   const [showSwipeHint, setShowSwipeHint] = useState(true);
+  const [showMobileThemeSelector, setShowMobileThemeSelector] = useState(false);
 
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
@@ -549,80 +711,6 @@ function Chat() {
   const currentUserId = currentUser?.id || currentUser?._id;
 
   const socket = getSocket();
-
-  // Auto-hide swipe hint
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setShowSwipeHint(false);
-    }, 5000);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Mobile view handler
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 1024) {
-        if (selectedChat) {
-          setMobileView('messages');
-        } else {
-          setMobileView('chats');
-        }
-      } else {
-        setMobileView('chats');
-      }
-    };
-
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [selectedChat]);
-
-  // Socket connection management
-  useEffect(() => {
-    const handleConnect = () => {
-      console.log("✅ Socket connected in component");
-      setSocketConnected(true);
-      setConnectionError(null);
-    };
-
-    const handleConnectError = (error) => {
-      console.error("❌ Socket connection error in component:", error);
-      setSocketConnected(false);
-      setConnectionError("Failed to connect to server");
-    };
-
-    const handleDisconnect = (reason) => {
-      console.log("🔌 Socket disconnected in component:", reason);
-      setSocketConnected(false);
-    };
-
-    socket.on("connect", handleConnect);
-    socket.on("connect_error", handleConnectError);
-    socket.on("disconnect", handleDisconnect);
-
-    if (!socket.connected) {
-      console.log("🔄 Connecting socket from component...");
-      socket.connect();
-    } else {
-      setSocketConnected(true);
-    }
-
-    return () => {
-      socket.off("connect", handleConnect);
-      socket.off("connect_error", handleConnectError);
-      socket.off("disconnect", handleDisconnect);
-    };
-  }, [socket, navigate]);
-
-  // When component mounts and socket is ready, enter chat page
-  useEffect(() => {
-    if (socketConnected && currentUserId) {
-      console.log("🚀 Entering chat page");
-      socket.emit("enterChatPage");
-      socket.emit("getOnlineUsers");
-    }
-  }, [socketConnected, currentUserId, socket]);
 
   // Get current theme settings
   const getCurrentTheme = () => {
@@ -650,62 +738,76 @@ function Chat() {
     localStorage.setItem("chatTheme", currentTheme);
   }, [isDark, currentTheme]);
 
-  // Track all chat participants for status monitoring
-  const [chatParticipants, setChatParticipants] = useState(new Set());
-
-  // Update chat participants when activeChats changes
-  useEffect(() => {
-    const token = localStorage.getItem("kobutor_token");
-    if (token) {
-      socket.emit("authenticate", token);
-
-      socket.once("authenticated", () => {
-        socket.emit("enterChatPage");
-        socket.emit("getOnlineUsers");
-      });
-    }
-    
-    const allParticipants = new Set();
-    activeChats.forEach((chat) => {
-      chat.participants.forEach((participant) => {
-        if (participant._id !== currentUserId) {
-          allParticipants.add(participant._id);
-        }
-      });
-    });
-    setChatParticipants(allParticipants);
-
-    if (allParticipants.size > 0) {
-      requestUserStatuses(Array.from(allParticipants));
-    }
-  }, [activeChats, currentUserId]);
-
-  // Enhanced Message Bubble Component for mobile
+  // Enhanced Message Bubble Component with theme colors and pin functionality
   const MessageBubble = ({ message, isOwnMessage, showDate }) => {
     const avatar = generateAvatar(message.sender._id, message.sender.username);
     const isOnline = onlineUsers.has(message.sender._id);
     const currentTheme = getCurrentTheme();
 
     const bubbleVariants = {
-      hidden: {
-        opacity: 0,
-        y: isOwnMessage ? 20 : -20,
-        scale: 0.8,
-      },
+      // hidden: {
+      //   opacity: 0,
+      //   y: isOwnMessage ? 20 : -20,
+      //   scale: 0.8,
+      // },
       visible: {
         opacity: 1,
         y: 0,
         scale: 1,
-        transition: {
-          type: "spring",
-          stiffness: 500,
-          damping: 30,
-        },
+        // transition: {
+        //   type: "spring",
+        //   stiffness: 500,
+        //   damping: 30,
+        // },
       },
       animate: {
         scale: [1, 1.05, 1],
         transition: { duration: 0.3 },
       },
+    };
+
+    // Pin/Unpin handlers
+    const handlePinMessage = async (messageId) => {
+      try {
+        const token = localStorage.getItem("kobutor_token");
+        const res = await fetch(
+          `${API}/api/chats/${selectedChat._id}/messages/${messageId}/pin`,
+          {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (res.ok) {
+          const updatedMessage = await res.json();
+          setPinnedMessages(prev => [...prev.filter(msg => msg._id !== messageId), updatedMessage]);
+        }
+      } catch (error) {
+        console.error("Error pinning message:", error);
+      }
+    };
+
+    const handleUnpinMessage = async (messageId) => {
+      try {
+        const token = localStorage.getItem("kobutor_token");
+        const res = await fetch(
+          `${API}/api/chats/${selectedChat._id}/messages/${messageId}/unpin`,
+          {
+            method: "POST",
+            headers: {
+              "Authorization": `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (res.ok) {
+          setPinnedMessages(prev => prev.filter(msg => msg._id !== messageId));
+        }
+      } catch (error) {
+        console.error("Error unpinning message:", error);
+      }
     };
 
     return (
@@ -807,6 +909,11 @@ function Chat() {
                 )}
 
                 <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <PinButton 
+                    message={message} 
+                    onPin={handlePinMessage}
+                    onUnpin={handleUnpinMessage}
+                  />
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -870,6 +977,110 @@ function Chat() {
       </motion.div>
     );
   };
+
+  // Auto-hide swipe hint
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowSwipeHint(false);
+    }, 5000);
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Mobile view handler
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        if (selectedChat) {
+          setMobileView('messages');
+        } else {
+          setMobileView('chats');
+        }
+      } else {
+        setMobileView('chats');
+      }
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [selectedChat]);
+
+  // Socket connection management
+  useEffect(() => {
+    const handleConnect = () => {
+      console.log("✅ Socket connected in component");
+      setSocketConnected(true);
+      setConnectionError(null);
+    };
+
+    const handleConnectError = (error) => {
+      console.error("❌ Socket connection error in component:", error);
+      setSocketConnected(false);
+      setConnectionError("Failed to connect to server");
+    };
+
+    const handleDisconnect = (reason) => {
+      console.log("🔌 Socket disconnected in component:", reason);
+      setSocketConnected(false);
+    };
+
+    socket.on("connect", handleConnect);
+    socket.on("connect_error", handleConnectError);
+    socket.on("disconnect", handleDisconnect);
+
+    if (!socket.connected) {
+      console.log("🔄 Connecting socket from component...");
+      socket.connect();
+    } else {
+      setSocketConnected(true);
+    }
+
+    return () => {
+      socket.off("connect", handleConnect);
+      socket.off("connect_error", handleConnectError);
+      socket.off("disconnect", handleDisconnect);
+    };
+  }, [socket, navigate]);
+
+  // When component mounts and socket is ready, enter chat page
+  useEffect(() => {
+    if (socketConnected && currentUserId) {
+      console.log("🚀 Entering chat page");
+      socket.emit("enterChatPage");
+      socket.emit("getOnlineUsers");
+    }
+  }, [socketConnected, currentUserId, socket]);
+
+  // Track all chat participants for status monitoring
+  const [chatParticipants, setChatParticipants] = useState(new Set());
+
+  // Update chat participants when activeChats changes
+  useEffect(() => {
+    const token = localStorage.getItem("kobutor_token");
+    if (token) {
+      socket.emit("authenticate", token);
+
+      socket.once("authenticated", () => {
+        socket.emit("enterChatPage");
+        socket.emit("getOnlineUsers");
+      });
+    }
+    
+    const allParticipants = new Set();
+    activeChats.forEach((chat) => {
+      chat.participants.forEach((participant) => {
+        if (participant._id !== currentUserId) {
+          allParticipants.add(participant._id);
+        }
+      });
+    });
+    setChatParticipants(allParticipants);
+
+    if (allParticipants.size > 0) {
+      requestUserStatuses(Array.from(allParticipants));
+    }
+  }, [activeChats, currentUserId]);
 
   // Mobile Back Handler
   const handleMobileBack = () => {
@@ -1455,6 +1666,7 @@ function Chat() {
                       onBack={handleMobileBack}
                       showSwipeHint={showSwipeHint}
                       onProfileClick={() => setShowUserProfile(true)}
+                      onThemeClick={() => setShowMobileThemeSelector(true)}
                     />
 
                     {/* Pinned Messages Section */}
@@ -1591,11 +1803,22 @@ function Chat() {
           setShowUserProfile(false);
           setShowGiftModal(true);
         }}
+        onThemeClick={() => {
+          setShowUserProfile(false);
+          setShowMobileThemeSelector(true);
+        }}
       />
 
       <QuickReactionsBar
         onReaction={handleQuickReaction}
         isVisible={showQuickReactions}
+      />
+
+      <MobileThemeSelector
+        isOpen={showMobileThemeSelector}
+        onClose={() => setShowMobileThemeSelector(false)}
+        currentTheme={currentTheme}
+        setCurrentTheme={setCurrentTheme}
       />
 
       <GiftModal

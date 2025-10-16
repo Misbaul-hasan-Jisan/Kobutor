@@ -74,7 +74,7 @@ function Home() {
       style={{ backgroundImage: `url(${isDark ? backgroundDark : background})` }}
     >
       {/* Animated background elements */}
-      <AnimatedSky />
+      {/* <AnimatedSky /> */}
       
       <Header />
    

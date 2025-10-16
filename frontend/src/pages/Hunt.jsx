@@ -5,6 +5,7 @@ import Header from "../components/header";
 import DarkButton from "../components/darkbutton";
 import Footer from "../components/Footer";
 import { useNavigate } from "react-router-dom";
+const API = import.meta.env.VITE_API_BASE_URL;
 
 // Import pigeon images
 import pigeonWhite from "../assets/pigeon-white.png";
@@ -98,9 +99,9 @@ function Hunt() {
 
   // Location options
 const locationOptions = [
-  { value: "Random", description: "Pigeons from anywhere" },
-  { value: "Bangladesh", description: "Inside country pigeons" },
-  { value: "Global", description: "Outside country pigeons" },
+  { value: "Random", description: "Pigeons from all locations" },
+  { value: "Bangladesh", description: "Local pigeons from Bangladesh" },
+  { value: "Global", description: "International pigeons worldwide" },
 ];
 
   // Apply theme
@@ -131,7 +132,7 @@ const locationOptions = [
       try {
         const token = localStorage.getItem("kobutor_token");
         const response = await fetch(
-          `http://localhost:3000/api/pigeons?location=${huntLocation}`,
+          `${API}/api/pigeons?location=${huntLocation}`,
           {
             headers: { Authorization: `Bearer ${token}` },
           }
@@ -175,7 +176,7 @@ const locationOptions = [
     try {
       const token = localStorage.getItem("kobutor_token");
       const res = await fetch(
-        `http://localhost:3000/api/pigeons/${selectedPigeon.id}/catch`,
+        `${API}/api/pigeons/${selectedPigeon.id}/catch`,
         {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
@@ -201,7 +202,7 @@ const locationOptions = [
     try {
       const token = localStorage.getItem("kobutor_token");
       const response = await fetch(
-        `http://localhost:3000/api/pigeons?location=${huntLocation}`,
+        `${API}/api/pigeons?location=${huntLocation}`,
         {
           headers: { Authorization: `Bearer ${token}` },
         }

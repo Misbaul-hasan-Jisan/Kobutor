@@ -39,21 +39,23 @@ export const getCatchablePigeons = async (req, res) => {
       senderId: { $ne: userId } // Don't show user's own pigeons
     };
 
-    // Old location system implementation
-    if (location && location !== 'Random') {
-      // Apply location filter based on old system
-      query.location = location;
-    }
-
-    // If random location, don't apply any location filter
-    // This will return pigeons from all locations
-    if (location === 'Random') {
-      // No location filter needed for random
+    // NEW: Apply location filter based on zone system
+    if (location) {
+      if (location === 'Bangladesh') {
+        query.zone = 'local';
+        query.countryCode = 'BD';
+      } else if (location === 'Global') {
+        query.zone = 'international';
+        query.countryCode = { $ne: 'BD' }; // Non-Bangladeshi pigeons
+      } else if (location === 'Random') {
+        // No additional filters for random - show pigeons from all zones
+      }
     }
 
     // Get all pigeons that match the criteria
     const allPigeons = await Pigeon.find(query)
-      .select("content color _id location senderId")
+      .populate('senderId', 'username') // Populate sender info if needed
+      .select("content color _id zone countryCode senderId")
       .limit(50);
 
     // Get users the current user has already chatted with
@@ -76,7 +78,7 @@ export const getCatchablePigeons = async (req, res) => {
       if (!pigeon.senderId) return true;
       
       // Check if sender is someone we've already chatted with
-      return !alreadyChattedUserIds.has(pigeon.senderId.toString());
+      return !alreadyChattedUserIds.has(pigeon.senderId._id ? pigeon.senderId._id.toString() : pigeon.senderId.toString());
     });
 
     // Limit to 20 pigeons for performance
@@ -86,7 +88,10 @@ export const getCatchablePigeons = async (req, res) => {
       id: p._id.toString(),
       content: p.content,
       color: p.color,
-      location: p.location, // Using the old location field directly
+      // Convert backend zone/countryCode to frontend location display
+      location: p.zone === 'local' ? 'Bangladesh' : 
+               p.zone === 'international' ? 'Global' : 
+               p.zone === 'random' ? 'Random' : 'Unknown',
       senderId: p.senderId // Include senderId for debugging
     }));
 
@@ -96,6 +101,7 @@ export const getCatchablePigeons = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
 
 export const catchPigeon = async (req, res) => {
   try {

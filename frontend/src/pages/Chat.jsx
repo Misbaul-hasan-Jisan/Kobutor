@@ -50,123 +50,169 @@ const REACTION_GROUPS = [
 
 // Pigeon Gifting System
 const PIGEON_GIFTS = {
-  SEEDS: { emoji: '🌱', name: 'Pigeon Seeds', cost: 10, description: 'A tasty treat for your feathered friend' },
-  GRAIN: { emoji: '🌾', name: 'Golden Grain', cost: 25, description: 'Premium nutrition for happy pigeons' },
-  GOLD: { emoji: '🥇', name: 'Gold Medal', cost: 100, description: 'Award your champion pigeon' },
-  HEART: { emoji: '💝', name: 'Pigeon Heart', cost: 50, description: 'Show your pigeon some love' },
-  CROWN: { emoji: '👑', name: 'Pigeon Crown', cost: 150, description: 'Royal treatment for your pigeon' }
+  SEEDS: {
+    emoji: "🌱",
+    name: "Pigeon Seeds",
+    cost: 10,
+    description: "A tasty treat for your feathered friend",
+  },
+  GRAIN: {
+    emoji: "🌾",
+    name: "Golden Grain",
+    cost: 25,
+    description: "Premium nutrition for happy pigeons",
+  },
+  GOLD: {
+    emoji: "🥇",
+    name: "Gold Medal",
+    cost: 100,
+    description: "Award your champion pigeon",
+  },
+  HEART: {
+    emoji: "💝",
+    name: "Pigeon Heart",
+    cost: 50,
+    description: "Show your pigeon some love",
+  },
+  CROWN: {
+    emoji: "👑",
+    name: "Pigeon Crown",
+    cost: 150,
+    description: "Royal treatment for your pigeon",
+  },
 };
 
 // Chat Achievements
 const CHAT_ACHIEVEMENTS = {
-  FIRST_MESSAGE: { emoji: '✉️', name: 'First Pigeon', description: 'Send your first message' },
-  CHAT_MASTER: { emoji: '🏆', name: 'Chat Champion', description: 'Send 100 messages' },
-  REACTION_KING: { emoji: '❤️', name: 'Reaction Pro', description: 'Get 50 reactions on your messages' },
-  PIGEON_TAMER: { emoji: '🕊️', name: 'Pigeon Tamer', description: 'Chat with 10 different users' },
-  EARLY_BIRD: { emoji: '🌅', name: 'Early Bird', description: 'Send messages at 5 AM' }
+  FIRST_MESSAGE: {
+    emoji: "✉️",
+    name: "First Pigeon",
+    description: "Send your first message",
+  },
+  CHAT_MASTER: {
+    emoji: "🏆",
+    name: "Chat Champion",
+    description: "Send 100 messages",
+  },
+  REACTION_KING: {
+    emoji: "❤️",
+    name: "Reaction Pro",
+    description: "Get 50 reactions on your messages",
+  },
+  PIGEON_TAMER: {
+    emoji: "🕊️",
+    name: "Pigeon Tamer",
+    description: "Chat with 10 different users",
+  },
+  EARLY_BIRD: {
+    emoji: "🌅",
+    name: "Early Bird",
+    description: "Send messages at 5 AM",
+  },
 };
 
 // Expanded Theme options with chat box colors (from previous code)
 const CHAT_THEMES = [
-  { 
-    id: "default", 
-    name: "Classic", 
+  {
+    id: "default",
+    name: "Classic",
     background: "bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900",
     chatBox: "from-yellow-400 to-orange-500",
     otherChatBox: "from-blue-400 to-purple-500",
     header: "from-yellow-400/10 to-transparent",
-    border: "border-yellow-400/30"
+    border: "border-yellow-400/30",
   },
-  { 
-    id: "sunset", 
-    name: "Sunset", 
+  {
+    id: "sunset",
+    name: "Sunset",
     background: "bg-gradient-to-br from-orange-400 via-red-500 to-purple-600",
     chatBox: "from-orange-300 to-red-400",
     otherChatBox: "from-purple-400 to-pink-500",
     header: "from-orange-400/20 to-transparent",
-    border: "border-orange-400/30"
+    border: "border-orange-400/30",
   },
-  { 
-    id: "ocean", 
-    name: "Ocean", 
+  {
+    id: "ocean",
+    name: "Ocean",
     background: "bg-gradient-to-br from-blue-400 via-teal-500 to-green-600",
     chatBox: "from-cyan-300 to-blue-400",
     otherChatBox: "from-teal-400 to-green-500",
     header: "from-cyan-400/20 to-transparent",
-    border: "border-cyan-400/30"
+    border: "border-cyan-400/30",
   },
-  { 
-    id: "forest", 
-    name: "Forest", 
+  {
+    id: "forest",
+    name: "Forest",
     background: "bg-gradient-to-br from-green-500 via-emerald-600 to-teal-700",
     chatBox: "from-emerald-300 to-green-400",
     otherChatBox: "from-teal-400 to-cyan-500",
     header: "from-emerald-400/20 to-transparent",
-    border: "border-emerald-400/30"
+    border: "border-emerald-400/30",
   },
-  { 
-    id: "berry", 
-    name: "Berry", 
+  {
+    id: "berry",
+    name: "Berry",
     background: "bg-gradient-to-br from-pink-500 via-purple-600 to-indigo-700",
     chatBox: "from-pink-300 to-rose-400",
     otherChatBox: "from-purple-400 to-indigo-500",
     header: "from-pink-400/20 to-transparent",
-    border: "border-pink-400/30"
+    border: "border-pink-400/30",
   },
-  { 
-    id: "fire", 
-    name: "Fire", 
+  {
+    id: "fire",
+    name: "Fire",
     background: "bg-gradient-to-br from-red-500 via-orange-600 to-yellow-600",
     chatBox: "from-red-300 to-orange-400",
     otherChatBox: "from-orange-400 to-yellow-500",
     header: "from-red-400/20 to-transparent",
-    border: "border-red-400/30"
+    border: "border-red-400/30",
   },
-  { 
-    id: "ice", 
-    name: "Ice", 
+  {
+    id: "ice",
+    name: "Ice",
     background: "bg-gradient-to-br from-cyan-400 via-blue-500 to-indigo-600",
     chatBox: "from-cyan-200 to-blue-300",
     otherChatBox: "from-blue-300 to-indigo-400",
     header: "from-cyan-400/20 to-transparent",
-    border: "border-cyan-400/30"
+    border: "border-cyan-400/30",
   },
-  { 
-    id: "lavender", 
-    name: "Lavender", 
-    background: "bg-gradient-to-br from-purple-400 via-violet-500 to-purple-700",
+  {
+    id: "lavender",
+    name: "Lavender",
+    background:
+      "bg-gradient-to-br from-purple-400 via-violet-500 to-purple-700",
     chatBox: "from-violet-300 to-purple-400",
     otherChatBox: "from-purple-400 to-indigo-500",
     header: "from-violet-400/20 to-transparent",
-    border: "border-violet-400/30"
+    border: "border-violet-400/30",
   },
-  { 
-    id: "sunrise", 
-    name: "Sunrise", 
+  {
+    id: "sunrise",
+    name: "Sunrise",
     background: "bg-gradient-to-br from-yellow-300 via-orange-400 to-pink-500",
     chatBox: "from-yellow-200 to-orange-300",
     otherChatBox: "from-orange-300 to-pink-400",
     header: "from-yellow-400/20 to-transparent",
-    border: "border-yellow-400/30"
+    border: "border-yellow-400/30",
   },
-  { 
-    id: "midnight", 
-    name: "Midnight", 
+  {
+    id: "midnight",
+    name: "Midnight",
     background: "bg-gradient-to-br from-gray-800 via-blue-900 to-purple-900",
     chatBox: "from-blue-300 to-indigo-400",
     otherChatBox: "from-indigo-400 to-purple-500",
     header: "from-blue-400/20 to-transparent",
-    border: "border-blue-400/30"
+    border: "border-blue-400/30",
   },
-  { 
-    id: "blackhole", 
-    name: "Blackhole", 
+  {
+    id: "blackhole",
+    name: "Blackhole",
     background: "bg-gradient-to-br from-gray-800 via-black-900 to-gray-900",
     chatBox: "from-gray-200 to-black/50",
     otherChatBox: "from-gray-600 to-black/50",
     header: "from-black-400/20 to-transparent",
-    border: "border-black-400/30"
-  }
+    border: "border-black-400/30",
+  },
 ];
 
 // Avatar generator function
@@ -250,10 +296,10 @@ const MessageStatus = ({ status, readBy = [] }) => {
 // Pin Button Component
 const PinButton = ({ message, onPin, onUnpin }) => {
   const isPinned = message.isPinned;
-  
+
   return (
     <button
-      onClick={() => isPinned ? onUnpin(message._id) : onPin(message._id)}
+      onClick={() => (isPinned ? onUnpin(message._id) : onPin(message._id))}
       className="text-xs p-1 hover:bg-black/20 rounded transition-all"
       title={isPinned ? "Unpin message" : "Pin message"}
     >
@@ -263,7 +309,14 @@ const PinButton = ({ message, onPin, onUnpin }) => {
 };
 
 // Message Action Menu Component
-const MessageActionMenu = ({ message, isOwnMessage, position, onClose, onEdit, onDelete }) => {
+const MessageActionMenu = ({
+  message,
+  isOwnMessage,
+  position,
+  onClose,
+  onEdit,
+  onDelete,
+}) => {
   if (!position) return null;
 
   return (
@@ -370,8 +423,15 @@ const EditMessageInput = ({ message, onSave, onCancel }) => {
 };
 
 // Mobile Chat Header with Theme Option
-const MobileChatHeader = ({ username, isOnline, onBack, showSwipeHint, onProfileClick, onThemeClick }) => (
-  <motion.div 
+const MobileChatHeader = ({
+  username,
+  isOnline,
+  onBack,
+  showSwipeHint,
+  onProfileClick,
+  onThemeClick,
+}) => (
+  <motion.div
     className="lg:hidden p-4 border-b border-white/20 bg-black/60 backdrop-blur-md flex items-center justify-between"
     initial={{ y: -10 }}
     animate={{ y: 0 }}
@@ -383,17 +443,14 @@ const MobileChatHeader = ({ username, isOnline, onBack, showSwipeHint, onProfile
       >
         ←
       </button>
-      <button 
-        onClick={onProfileClick}
-        className="flex items-center space-x-3"
-      >
+      <button onClick={onProfileClick} className="flex items-center space-x-3">
         <div>
           <h3 className="font-semibold text-white text-left">{username}</h3>
           <StatusIndicator isOnline={isOnline} isTyping={false} />
         </div>
       </button>
     </div>
-    
+
     <div className="flex items-center space-x-2">
       {showSwipeHint && (
         <motion.div
@@ -416,9 +473,16 @@ const MobileChatHeader = ({ username, isOnline, onBack, showSwipeHint, onProfile
 );
 
 // User Profile Drawer for Mobile with Theme Option
-const UserProfileDrawer = ({ user, isOpen, onClose, isOnline, onSendGift, onThemeClick }) => {
+const UserProfileDrawer = ({
+  user,
+  isOpen,
+  onClose,
+  isOnline,
+  onSendGift,
+  onThemeClick,
+}) => {
   const avatar = generateAvatar(user?._id, user?.username);
-  
+
   return (
     <AnimatePresence>
       {isOpen && (
@@ -446,18 +510,24 @@ const UserProfileDrawer = ({ user, isOpen, onClose, isOnline, onSendGift, onThem
                 ✕
               </button>
             </div>
-            
+
             <div className="text-center mb-6">
-              <div className={`w-20 h-20 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-2xl mx-auto mb-4 shadow-lg`}>
+              <div
+                className={`w-20 h-20 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-2xl mx-auto mb-4 shadow-lg`}
+              >
                 {avatar.emoji}
               </div>
               <h4 className="text-white font-semibold text-lg">
                 {user?.username || "Anonymous Pigeon"}
               </h4>
               <div className="flex items-center justify-center space-x-2 mt-2">
-                <div className={`w-3 h-3 rounded-full ${isOnline ? 'bg-green-400' : 'bg-gray-400'}`} />
+                <div
+                  className={`w-3 h-3 rounded-full ${
+                    isOnline ? "bg-green-400" : "bg-gray-400"
+                  }`}
+                />
                 <span className="text-sm text-gray-300">
-                  {isOnline ? 'Online' : 'Offline'}
+                  {isOnline ? "Online" : "Offline"}
                 </span>
               </div>
             </div>
@@ -492,17 +562,19 @@ const UserProfileDrawer = ({ user, isOpen, onClose, isOnline, onSendGift, onThem
               <div className="bg-black/30 rounded-xl p-4">
                 <h5 className="text-white font-semibold mb-3">Send a Gift</h5>
                 <div className="grid grid-cols-2 gap-2">
-                  {Object.entries(PIGEON_GIFTS).slice(0, 4).map(([key, gift]) => (
-                    <motion.button
-                      key={key}
-                      whileTap={{ scale: 0.95 }}
-                      onClick={() => onSendGift(key)}
-                      className="bg-yellow-400/20 text-yellow-400 py-2 rounded-lg font-semibold hover:bg-yellow-400/30 transition-all flex items-center justify-center space-x-2"
-                    >
-                      <span>{gift.emoji}</span>
-                      <span className="text-xs">{gift.cost}</span>
-                    </motion.button>
-                  ))}
+                  {Object.entries(PIGEON_GIFTS)
+                    .slice(0, 4)
+                    .map(([key, gift]) => (
+                      <motion.button
+                        key={key}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={() => onSendGift(key)}
+                        className="bg-yellow-400/20 text-yellow-400 py-2 rounded-lg font-semibold hover:bg-yellow-400/30 transition-all flex items-center justify-center space-x-2"
+                      >
+                        <span>{gift.emoji}</span>
+                        <span className="text-xs">{gift.cost}</span>
+                      </motion.button>
+                    ))}
                 </div>
               </div>
 
@@ -519,7 +591,12 @@ const UserProfileDrawer = ({ user, isOpen, onClose, isOnline, onSendGift, onThem
 };
 
 // Mobile Theme Selector Modal
-const MobileThemeSelector = ({ isOpen, onClose, currentTheme, setCurrentTheme }) => {
+const MobileThemeSelector = ({
+  isOpen,
+  onClose,
+  currentTheme,
+  setCurrentTheme,
+}) => {
   if (!isOpen) return null;
 
   return (
@@ -551,7 +628,9 @@ const MobileThemeSelector = ({ isOpen, onClose, currentTheme, setCurrentTheme })
                 setCurrentTheme(theme.id);
                 onClose();
               }}
-              className={`relative h-20 rounded-xl ${theme.background} border-2 ${
+              className={`relative h-20 rounded-xl ${
+                theme.background
+              } border-2 ${
                 currentTheme === theme.id
                   ? "border-yellow-400 ring-2 ring-yellow-200"
                   : "border-white/20"
@@ -561,8 +640,16 @@ const MobileThemeSelector = ({ isOpen, onClose, currentTheme, setCurrentTheme })
                 {theme.name}
               </span>
               <div className="flex space-x-1">
-                <div className={`w-3 h-3 rounded-full ${theme.chatBox.split(' ')[1]}`}></div>
-                <div className={`w-3 h-3 rounded-full ${theme.otherChatBox.split(' ')[1]}`}></div>
+                <div
+                  className={`w-3 h-3 rounded-full ${
+                    theme.chatBox.split(" ")[1]
+                  }`}
+                ></div>
+                <div
+                  className={`w-3 h-3 rounded-full ${
+                    theme.otherChatBox.split(" ")[1]
+                  }`}
+                ></div>
               </div>
               <span className="absolute -top-2 -right-2 text-xs bg-black/70 rounded-full w-6 h-6 flex items-center justify-center text-yellow-400">
                 {currentTheme === theme.id ? "✓" : ""}
@@ -574,10 +661,18 @@ const MobileThemeSelector = ({ isOpen, onClose, currentTheme, setCurrentTheme })
         <div className="mt-6 p-4 bg-black/30 rounded-xl">
           <h4 className="text-white font-semibold mb-2">Preview</h4>
           <div className="flex space-x-2">
-            <div className={`flex-1 p-3 rounded-lg ${getCurrentTheme(currentTheme).chatBox} text-black text-sm`}>
+            <div
+              className={`flex-1 p-3 rounded-lg ${
+                getCurrentTheme(currentTheme).chatBox
+              } text-black text-sm`}
+            >
               Your message
             </div>
-            <div className={`flex-1 p-3 rounded-lg ${getCurrentTheme(currentTheme).otherChatBox} text-white text-sm`}>
+            <div
+              className={`flex-1 p-3 rounded-lg ${
+                getCurrentTheme(currentTheme).otherChatBox
+              } text-white text-sm`}
+            >
               Their message
             </div>
           </div>
@@ -664,7 +759,7 @@ const GiftModal = ({ isOpen, onClose, onSendGift, recipient }) => {
         <h3 className="text-xl font-bold mb-4 text-black dark:text-white flex items-center">
           <span className="mr-2">🎁</span> Send a Pigeon Gift
         </h3>
-        
+
         <div className="grid grid-cols-2 gap-3 mb-6">
           {Object.entries(PIGEON_GIFTS).map(([key, gift]) => (
             <motion.button
@@ -674,13 +769,17 @@ const GiftModal = ({ isOpen, onClose, onSendGift, recipient }) => {
               onClick={() => setSelectedGift(key)}
               className={`p-3 rounded-xl border-2 transition-all ${
                 selectedGift === key
-                  ? 'border-yellow-400 bg-yellow-400/20'
-                  : 'border-gray-300 dark:border-gray-600 hover:border-yellow-400'
+                  ? "border-yellow-400 bg-yellow-400/20"
+                  : "border-gray-300 dark:border-gray-600 hover:border-yellow-400"
               }`}
             >
               <div className="text-2xl mb-1">{gift.emoji}</div>
-              <div className="text-sm font-semibold text-black dark:text-white">{gift.name}</div>
-              <div className="text-xs text-gray-600 dark:text-gray-400">{gift.cost} coins</div>
+              <div className="text-sm font-semibold text-black dark:text-white">
+                {gift.name}
+              </div>
+              <div className="text-xs text-gray-600 dark:text-gray-400">
+                {gift.cost} coins
+              </div>
             </motion.button>
           ))}
         </div>
@@ -743,7 +842,12 @@ const AchievementModal = ({ achievement, isOpen, onClose }) => {
 };
 
 // Enhanced Theme Selector Component for Desktop
-const ThemeSelector = ({ showThemePicker, setShowThemePicker, currentTheme, setCurrentTheme }) => (
+const ThemeSelector = ({
+  showThemePicker,
+  setShowThemePicker,
+  currentTheme,
+  setCurrentTheme,
+}) => (
   <AnimatePresence>
     {showThemePicker && (
       <motion.div
@@ -800,14 +904,14 @@ function Chat() {
   const [onlineUsers, setOnlineUsers] = useState(new Set());
   const [socketConnected, setSocketConnected] = useState(false);
   const [connectionError, setConnectionError] = useState(null);
-  
+
   // New mobile states
   const [showUserProfile, setShowUserProfile] = useState(false);
   const [showQuickReactions, setShowQuickReactions] = useState(false);
   const [showGiftModal, setShowGiftModal] = useState(false);
   const [showAchievement, setShowAchievement] = useState(false);
   const [currentAchievement, setCurrentAchievement] = useState(null);
-  const [mobileView, setMobileView] = useState('chats');
+  const [mobileView, setMobileView] = useState("chats");
   const [showSwipeHint, setShowSwipeHint] = useState(true);
   const [showMobileThemeSelector, setShowMobileThemeSelector] = useState(false);
 
@@ -872,12 +976,12 @@ function Chat() {
     // Long press handler for mobile
     const handleTouchStart = (e) => {
       if (!isOwnMessage) return;
-      
+
       longPressTimer.current = setTimeout(() => {
         const touch = e.touches[0];
         setMessageActionMenu({
           message,
-          position: { x: touch.clientX, y: touch.clientY }
+          position: { x: touch.clientX, y: touch.clientY },
         });
       }, 500); // 500ms long press
     };
@@ -891,17 +995,18 @@ function Chat() {
     // Right click handler for desktop
     const handleContextMenu = (e) => {
       if (!isOwnMessage) return;
-      
+
       e.preventDefault();
       setMessageActionMenu({
         message,
-        position: { x: e.clientX, y: e.clientY }
+        position: { x: e.clientX, y: e.clientY },
       });
     };
 
     // Click handler for both
     const handleClick = (e) => {
-      if (e.detail === 2 && isOwnMessage) { // Double click
+      if (e.detail === 2 && isOwnMessage) {
+        // Double click
         setEditingMessage(message);
         setEditText(message.text);
       }
@@ -916,14 +1021,17 @@ function Chat() {
           {
             method: "POST",
             headers: {
-              "Authorization": `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
 
         if (res.ok) {
           const updatedMessage = await res.json();
-          setPinnedMessages(prev => [...prev.filter(msg => msg._id !== messageId), updatedMessage]);
+          setPinnedMessages((prev) => [
+            ...prev.filter((msg) => msg._id !== messageId),
+            updatedMessage,
+          ]);
         }
       } catch (error) {
         console.error("Error pinning message:", error);
@@ -938,13 +1046,15 @@ function Chat() {
           {
             method: "POST",
             headers: {
-              "Authorization": `Bearer ${token}`,
+              Authorization: `Bearer ${token}`,
             },
           }
         );
 
         if (res.ok) {
-          setPinnedMessages(prev => prev.filter(msg => msg._id !== messageId));
+          setPinnedMessages((prev) =>
+            prev.filter((msg) => msg._id !== messageId)
+          );
         }
       } catch (error) {
         console.error("Error unpinning message:", error);
@@ -956,7 +1066,7 @@ function Chat() {
         variants={bubbleVariants}
         initial="hidden"
         animate={message.animate ? "animate" : "visible"}
-        className="relative group message-bubble"
+        className="relative group message-bubble w-full"
         onContextMenu={handleContextMenu}
         onClick={handleClick}
         onTouchStart={handleTouchStart}
@@ -964,18 +1074,19 @@ function Chat() {
         onTouchCancel={handleTouchEnd}
       >
         {showDate && (
-          <div className="text-center text-xs text-white/60 my-4 px-3 py-1 bg-black/30 rounded-full inline-block">
+          <div className="text-center text-xs text-white/60 my-4 px-3 py-1 bg-black/30 rounded-full inline-block mx-auto block w-fit">
             {formatDate(message.createdAt)}
           </div>
         )}
 
         <div
-          className={`flex ${
+          className={`flex w-full ${
             isOwnMessage ? "justify-end" : "justify-start"
-          } items-end space-x-2`}
+          } items-start space-x-2 px-2`}
         >
+          {/* Avatar for other user's messages - only show on left side */}
           {!isOwnMessage && (
-            <div className="relative">
+            <div className="flex-shrink-0 relative">
               <div
                 className={`w-8 h-8 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-sm shadow-md`}
               >
@@ -984,9 +1095,10 @@ function Chat() {
             </div>
           )}
 
+          {/* Message bubble */}
           <motion.div
             whileHover={{ scale: 1.02 }}
-            className={`max-w-xs lg:max-w-md px-4 py-3 rounded-2xl shadow-lg relative ${
+            className={`max-w-[85%] lg:max-w-md px-4 py-3 rounded-2xl shadow-lg relative ${
               isOwnMessage
                 ? `bg-gradient-to-r ${currentTheme.chatBox} text-black rounded-br-none`
                 : `bg-gradient-to-r ${currentTheme.otherChatBox} text-white rounded-bl-none`
@@ -995,10 +1107,12 @@ function Chat() {
             {message.isGift && (
               <div className="text-center mb-2">
                 <span className="text-2xl">{message.giftEmoji}</span>
-                <p className="text-xs text-yellow-600 font-semibold">Sent a gift!</p>
+                <p className="text-xs text-yellow-600 font-semibold">
+                  Sent a gift!
+                </p>
               </div>
             )}
-            
+
             <p className="mb-1 leading-relaxed break-words">{message.text}</p>
 
             {/* Show edited indicator */}
@@ -1062,8 +1176,8 @@ function Chat() {
                 )}
 
                 <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <PinButton 
-                    message={message} 
+                  <PinButton
+                    message={message}
                     onPin={handlePinMessage}
                     onUnpin={handleUnpinMessage}
                   />
@@ -1084,8 +1198,9 @@ function Chat() {
             </div>
           </motion.div>
 
+          {/* Avatar for own messages - only show on right side */}
           {isOwnMessage && (
-            <div className="relative">
+            <div className="flex-shrink-0 relative">
               <div
                 className={`w-8 h-8 rounded-full bg-gradient-to-r ${avatar.gradient} flex items-center justify-center text-sm shadow-md`}
               >
@@ -1145,18 +1260,18 @@ function Chat() {
     const handleResize = () => {
       if (window.innerWidth < 1024) {
         if (selectedChat) {
-          setMobileView('messages');
+          setMobileView("messages");
         } else {
-          setMobileView('chats');
+          setMobileView("chats");
         }
       } else {
-        setMobileView('chats');
+        setMobileView("chats");
       }
     };
 
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, [selectedChat]);
 
   // Socket connection management
@@ -1219,7 +1334,7 @@ function Chat() {
         socket.emit("getOnlineUsers");
       });
     }
-    
+
     const allParticipants = new Set();
     activeChats.forEach((chat) => {
       chat.participants.forEach((participant) => {
@@ -1254,10 +1369,10 @@ function Chat() {
       if (res.ok) {
         setEditingMessage(null);
         setEditText("");
-        
+
         // Update local state
-        setMessages(prev =>
-          prev.map(msg =>
+        setMessages((prev) =>
+          prev.map((msg) =>
             msg._id === messageId
               ? { ...msg, text: newText, isEdited: true, editedAt: new Date() }
               : msg
@@ -1284,8 +1399,8 @@ function Chat() {
 
       if (res.ok) {
         // Update local state - either remove or show as deleted
-        setMessages(prev =>
-          prev.map(msg =>
+        setMessages((prev) =>
+          prev.map((msg) =>
             msg._id === messageId
               ? { ...msg, isDeleted: true, text: "This message was deleted" }
               : msg
@@ -1300,7 +1415,7 @@ function Chat() {
   // Mobile Back Handler
   const handleMobileBack = () => {
     setSelectedChat(null);
-    setMobileView('chats');
+    setMobileView("chats");
   };
 
   // Quick reaction handler
@@ -1321,31 +1436,28 @@ function Chat() {
     try {
       const token = localStorage.getItem("kobutor_token");
       const gift = PIGEON_GIFTS[giftType];
-      
-      const res = await fetch(
-        `${API}/api/chats/${selectedChat._id}/messages`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ 
-            text: `Sent a ${gift.name} gift! ${gift.emoji}`,
-            isGift: true,
-            giftType: giftType,
-            giftEmoji: gift.emoji
-          }),
-        }
-      );
+
+      const res = await fetch(`${API}/api/chats/${selectedChat._id}/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          text: `Sent a ${gift.name} gift! ${gift.emoji}`,
+          isGift: true,
+          giftType: giftType,
+          giftEmoji: gift.emoji,
+        }),
+      });
 
       if (res.ok) {
         setNewMessage("");
         // Show achievement if it's the first gift
-        if (!localStorage.getItem('sent_first_gift')) {
+        if (!localStorage.getItem("sent_first_gift")) {
           setCurrentAchievement(CHAT_ACHIEVEMENTS.FIRST_MESSAGE);
           setShowAchievement(true);
-          localStorage.setItem('sent_first_gift', 'true');
+          localStorage.setItem("sent_first_gift", "true");
         }
       }
     } catch (error) {
@@ -1369,12 +1481,9 @@ function Chat() {
     try {
       setSelectedChat(chat);
       const token = localStorage.getItem("kobutor_token");
-      const res = await fetch(
-        `${API}/api/chats/${chat._id}/messages`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await fetch(`${API}/api/chats/${chat._id}/messages`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (!res.ok) throw new Error("Failed to fetch messages");
 
@@ -1405,7 +1514,7 @@ function Chat() {
 
       // Set mobile view
       if (window.innerWidth < 1024) {
-        setMobileView('messages');
+        setMobileView("messages");
       }
     } catch (error) {
       console.error("Error selecting chat:", error);
@@ -1425,17 +1534,14 @@ function Chat() {
         const messageIds = unreadMessages.map((msg) => msg._id);
         const token = localStorage.getItem("kobutor_token");
 
-        await fetch(
-          `${API}/api/chats/${selectedChat._id}/read`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${token}`,
-            },
-            body: JSON.stringify({ messageIds }),
-          }
-        );
+        await fetch(`${API}/api/chats/${selectedChat._id}/read`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ messageIds }),
+        });
 
         socket.emit("markAsRead", {
           chatId: selectedChat._id,
@@ -1471,17 +1577,14 @@ function Chat() {
 
     try {
       const token = localStorage.getItem("kobutor_token");
-      const res = await fetch(
-        `${API}/api/chats/${selectedChat._id}/messages`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ text: newMessage }),
-        }
-      );
+      const res = await fetch(`${API}/api/chats/${selectedChat._id}/messages`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ text: newMessage }),
+      });
 
       if (!res.ok) throw new Error("Failed to send message");
 
@@ -1490,10 +1593,10 @@ function Chat() {
       setTyping(false);
 
       // Show achievement for first message
-      if (!localStorage.getItem('sent_first_message')) {
+      if (!localStorage.getItem("sent_first_message")) {
         setCurrentAchievement(CHAT_ACHIEVEMENTS.FIRST_MESSAGE);
         setShowAchievement(true);
-        localStorage.setItem('sent_first_message', 'true');
+        localStorage.setItem("sent_first_message", "true");
       }
     } catch (error) {
       console.error("Error sending message:", error);
@@ -1554,13 +1657,10 @@ function Chat() {
   const handleDeleteChat = async () => {
     try {
       const token = localStorage.getItem("kobutor_token");
-      const res = await fetch(
-        `${API}/api/chats/${selectedChat._id}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const res = await fetch(`${API}/api/chats/${selectedChat._id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
       if (res.ok) {
         setActiveChats((prev) =>
@@ -1568,7 +1668,7 @@ function Chat() {
         );
         setSelectedChat(null);
         setShowDeleteConfirm(false);
-        setMobileView('chats');
+        setMobileView("chats");
       }
     } catch (error) {
       console.error("Error deleting chat:", error);
@@ -1640,10 +1740,15 @@ function Chat() {
   useEffect(() => {
     const handleMessageEdited = (data) => {
       if (selectedChat && data.chatId === selectedChat._id) {
-        setMessages(prev =>
-          prev.map(msg =>
+        setMessages((prev) =>
+          prev.map((msg) =>
             msg._id === data.messageId
-              ? { ...msg, text: data.text, isEdited: true, editedAt: data.editedAt }
+              ? {
+                  ...msg,
+                  text: data.text,
+                  isEdited: true,
+                  editedAt: data.editedAt,
+                }
               : msg
           )
         );
@@ -1652,8 +1757,8 @@ function Chat() {
 
     const handleMessageDeleted = (data) => {
       if (selectedChat && data.chatId === selectedChat._id) {
-        setMessages(prev =>
-          prev.map(msg =>
+        setMessages((prev) =>
+          prev.map((msg) =>
             msg._id === data.messageId
               ? { ...msg, isDeleted: true, text: "This message was deleted" }
               : msg
@@ -1756,8 +1861,8 @@ function Chat() {
       <Header />
       <DarkButton isDark={isDark} setIsDark={setIsDark} />
 
-      <ConnectionStatus 
-        isConnected={socketConnected} 
+      <ConnectionStatus
+        isConnected={socketConnected}
         onReconnect={handleManualReconnect}
       />
 
@@ -1765,22 +1870,22 @@ function Chat() {
         {/* Mobile Navigation */}
         <div className="lg:hidden flex border-b border-white/20 bg-black/40">
           <button
-            onClick={() => setMobileView('chats')}
+            onClick={() => setMobileView("chats")}
             className={`flex-1 py-3 text-center font-semibold transition-all ${
-              mobileView === 'chats' 
-                ? 'bg-yellow-400 text-black' 
-                : 'text-white/70 hover:text-white'
+              mobileView === "chats"
+                ? "bg-yellow-400 text-black"
+                : "text-white/70 hover:text-white"
             }`}
           >
             💬 Chats
           </button>
           <button
-            onClick={() => selectedChat && setMobileView('messages')}
+            onClick={() => selectedChat && setMobileView("messages")}
             disabled={!selectedChat}
             className={`flex-1 py-3 text-center font-semibold transition-all ${
-              mobileView === 'messages' 
-                ? 'bg-yellow-400 text-black' 
-                : 'text-white/70 hover:text-white disabled:opacity-50'
+              mobileView === "messages"
+                ? "bg-yellow-400 text-black"
+                : "text-white/70 hover:text-white disabled:opacity-50"
             }`}
           >
             ✉️ Messages
@@ -1813,7 +1918,7 @@ function Chat() {
                 >
                   🎨
                 </button>
-                <ThemeSelector 
+                <ThemeSelector
                   showThemePicker={showThemePicker}
                   setShowThemePicker={setShowThemePicker}
                   currentTheme={currentTheme}
@@ -1824,10 +1929,12 @@ function Chat() {
 
             <div className="flex flex-1 overflow-hidden">
               {/* Chat list - Hidden on mobile when in messages view */}
-              <div className={`
-                ${mobileView === 'chats' ? 'flex' : 'hidden'} 
+              <div
+                className={`
+                ${mobileView === "chats" ? "flex" : "hidden"} 
                 lg:flex w-full lg:w-1/3 border-r border-white/20 overflow-y-auto bg-black/30 flex-col
-              `}>
+              `}
+              >
                 {loading ? (
                   <div className="p-4 text-center text-white/60 flex flex-col items-center">
                     <div className="animate-bounce text-2xl mb-2">🐦</div>
@@ -1860,9 +1967,11 @@ function Chat() {
                           >
                             {avatar.emoji}
                           </div>
-                          <div className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-black ${
-                            isOnline ? 'bg-green-400' : 'bg-gray-400'
-                          }`} />
+                          <div
+                            className={`absolute -bottom-1 -right-1 w-3 h-3 rounded-full border-2 border-black ${
+                              isOnline ? "bg-green-400" : "bg-gray-400"
+                            }`}
+                          />
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold truncate">
@@ -1898,16 +2007,20 @@ function Chat() {
               </div>
 
               {/* Messages area */}
-              <div className={`
-                ${mobileView === 'messages' ? 'flex' : 'hidden'} 
+              <div
+                className={`
+                ${mobileView === "messages" ? "flex" : "hidden"} 
                 lg:flex flex-1 flex-col bg-chat-pattern relative
-              `}>
+              `}
+              >
                 {selectedChat ? (
                   <>
                     <MobileChatHeader
-                      username={selectedChat.participants.find(
-                        (p) => p._id !== currentUserId
-                      )?.username || "Anonymous Pigeon"}
+                      username={
+                        selectedChat.participants.find(
+                          (p) => p._id !== currentUserId
+                        )?.username || "Anonymous Pigeon"
+                      }
                       isOnline={onlineUsers.has(
                         selectedChat.participants.find(
                           (p) => p._id !== currentUserId
@@ -2014,7 +2127,9 @@ function Chat() {
                       <div className="flex space-x-2">
                         <button
                           type="button"
-                          onClick={() => setShowQuickReactions(!showQuickReactions)}
+                          onClick={() =>
+                            setShowQuickReactions(!showQuickReactions)
+                          }
                           className="p-2 hover:bg-white/10 rounded-full transition-all"
                         >
                           😊
@@ -2060,7 +2175,9 @@ function Chat() {
         {messageActionMenu && (
           <MessageActionMenu
             message={messageActionMenu.message}
-            isOwnMessage={messageActionMenu.message.sender._id === currentUserId}
+            isOwnMessage={
+              messageActionMenu.message.sender._id === currentUserId
+            }
             position={messageActionMenu.position}
             onClose={() => setMessageActionMenu(null)}
             onEdit={(message) => {
@@ -2074,11 +2191,11 @@ function Chat() {
 
       {/* Mobile Components */}
       <UserProfileDrawer
-        user={selectedChat?.participants.find(p => p._id !== currentUserId)}
+        user={selectedChat?.participants.find((p) => p._id !== currentUserId)}
         isOpen={showUserProfile}
         onClose={() => setShowUserProfile(false)}
         isOnline={onlineUsers.has(
-          selectedChat?.participants.find(p => p._id !== currentUserId)?._id
+          selectedChat?.participants.find((p) => p._id !== currentUserId)?._id
         )}
         onSendGift={() => {
           setShowUserProfile(false);
@@ -2106,7 +2223,9 @@ function Chat() {
         isOpen={showGiftModal}
         onClose={() => setShowGiftModal(false)}
         onSendGift={handleSendGift}
-        recipient={selectedChat?.participants.find(p => p._id !== currentUserId)}
+        recipient={selectedChat?.participants.find(
+          (p) => p._id !== currentUserId
+        )}
       />
 
       <AchievementModal
@@ -2147,88 +2266,104 @@ function Chat() {
       <Footer />
 
       <style>{`
-        @keyframes float {
-          0% { transform: translateY(0) rotate(0deg); }
-          50% { transform: translateY(-10px) rotate(2deg); }
-          100% { transform: translateY(0) rotate(0deg); }
-        }
-        
-        .animate-float { animation: float 3s ease-in-out infinite; }
-        
-        .bg-chat-pattern { 
-          background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.03' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='3'/%3E%3Ccircle cx='13' cy='13' r='3'/%3E%3C/g%3E%3C/svg%3E");
-        }
-        
-        .messages-container {
-          scroll-behavior: smooth;
-        }
-        
-        .messages-container::-webkit-scrollbar {
-          width: 6px;
-        }
-        
-        .messages-container::-webkit-scrollbar-track {
-          background: rgba(255,255,255,0.1);
-          border-radius: 3px;
-        }
-        
-        .messages-container::-webkit-scrollbar-thumb {
-          background: rgba(255,255,255,0.3);
-          border-radius: 3px;
-        }
-        
-        .messages-container::-webkit-scrollbar-thumb:hover {
-          background: rgba(255,255,255,0.5);
-        }
+  @keyframes float {
+    0% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-10px) rotate(2deg); }
+    100% { transform: translateY(0) rotate(0deg); }
+  }
+  
+  .animate-float { animation: float 3s ease-in-out infinite; }
+  
+  .bg-chat-pattern { 
+    background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.03' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='3'/%3E%3Ccircle cx='13' cy='13' r='3'/%3E%3C/g%3E%3C/svg%3E");
+  }
+  
+  .messages-container {
+    scroll-behavior: smooth;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .messages-container::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .messages-container::-webkit-scrollbar-track {
+    background: rgba(255,255,255,0.1);
+    border-radius: 3px;
+  }
+  
+  .messages-container::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.3);
+    border-radius: 3px;
+  }
+  
+  .messages-container::-webkit-scrollbar-thumb:hover {
+    background: rgba(255,255,255,0.5);
+  }
 
-        /* Mobile optimizations */
-        @media (max-width: 1024px) {
-          .container {
-            padding-left: 0;
-            padding-right: 0;
-          }
-          
-          .messages-container {
-            padding: 1rem;
-          }
-        }
+  /* Mobile optimizations */
+  @media (max-width: 1024px) {
+    .container {
+      padding-left: 0;
+      padding-right: 0;
+    }
+    
+    .messages-container {
+      padding: 0.5rem;
+    }
+    
+    /* Ensure messages take full width but content is properly aligned */
+    .message-bubble {
+      width: 100%;
+      margin-bottom: 0.5rem;
+    }
+  }
 
-        /* Improved touch targets for mobile */
-        @media (max-width: 768px) {
-          button, [role="button"] {
-            min-height: 44px;
-            min-width: 44px;
-          }
-          
-          input, textarea {
-            font-size: 16px; /* Prevents zoom on iOS */
-          }
-        }
+  /* Improved touch targets for mobile */
+  @media (max-width: 768px) {
+    button, [role="button"] {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    input, textarea {
+      font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    /* Better message spacing on mobile */
+    .messages-container {
+      gap: 0.5rem;
+    }
+  }
 
-        /* Message bubble styles for better interaction */
-        .message-bubble {
-          user-select: none;
-          -webkit-user-select: none;
-          -webkit-touch-callout: none;
-        }
+  /* Message bubble styles for better interaction */
+  .message-bubble {
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+    display: flex;
+    flex-direction: column;
+  }
 
-        /* Prevent text selection on messages */
-        .messages-container {
-          -webkit-user-select: none;
-          -moz-user-select: none;
-          -ms-user-select: none;
-          user-select: none;
-        }
+  /* Prevent text selection on messages */
+  .messages-container {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
 
-        /* Improve touch targets for message bubbles */
-        @media (max-width: 768px) {
-          .message-bubble {
-            min-height: 44px;
-            display: flex;
-            align-items: center;
-          }
-        }
-      `}</style>
+  /* Improve touch targets for message bubbles */
+  @media (max-width: 768px) {
+    .message-bubble {
+      min-height: auto;
+      display: flex;
+      align-items: stretch;
+    }
+  }
+`}</style>
     </div>
   );
 }

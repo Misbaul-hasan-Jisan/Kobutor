@@ -16,7 +16,9 @@ import {
   togglePinMessage,
   getPinnedMessages,
   getUserStatus,
-  getOnlineUsers
+  getOnlineUsers,
+  editMessage,
+  deleteMessage
 } from "../controllers/chatController.js";
 
 const router = express.Router();
@@ -41,5 +43,9 @@ router.get("/:chatId/pinned", authMiddleware, getPinnedMessages);
 // Status routes
 router.get("/status/online", authMiddleware, getOnlineUsers);
 router.get("/status/user/:userId", authMiddleware, getUserStatus);
+
+// backend/routes/chatRoutes.js - Add new routes
+router.put("/:chatId/messages/:messageId", authMiddleware, editMessage);
+router.delete("/:chatId/messages/:messageId", authMiddleware, deleteMessage);
 
 export default router;

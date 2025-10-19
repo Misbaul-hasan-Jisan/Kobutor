@@ -1,6 +1,7 @@
 // backend/controllers/chatController.js
 import Chat from "../models/chat.js";
 import Message from "../models/message.js";
+import UserStatus from "../models/userStatus.js";
 import { getIO } from "../sockets/socket.js";
 
 // Get all chats for logged-in user
@@ -57,7 +58,7 @@ export const deleteChat = async (req, res) => {
   }
 };
 
-// Get messages for a specific chat
+// Get messages for a specific chat - UPDATED TO FIX DELETED MESSAGES
 export const getChatMessages = async (req, res) => {
   try {
     const { chatId } = req.params;
@@ -74,13 +75,26 @@ export const getChatMessages = async (req, res) => {
       .populate("sender", "username")
       .lean(); // Use lean() for better performance
 
-    // Convert Map reactions to objects for all messages
-    const messagesWithReactions = messages.map(message => ({
-      ...message,
-      reactions: message.reactions instanceof Map 
-        ? Object.fromEntries(message.reactions) 
-        : message.reactions || {}
-    }));
+    // Convert Map reactions to objects for all messages AND handle deleted messages
+    const messagesWithReactions = messages.map(message => {
+      // If message is deleted, show deleted text and clear reactions
+      if (message.isDeleted) {
+        return {
+          ...message,
+          text: "This message was deleted",
+          isDeleted: true,
+          reactions: {},
+          readBy: message.readBy || []
+        };
+      }
+      
+      return {
+        ...message,
+        reactions: message.reactions instanceof Map 
+          ? Object.fromEntries(message.reactions) 
+          : message.reactions || {}
+      };
+    });
 
     res.json(messagesWithReactions);
   } catch (err) {
@@ -90,7 +104,6 @@ export const getChatMessages = async (req, res) => {
 };
 
 // Send a message
-// backend/controllers/chatController.js
 export const sendMessage = async (req, res) => {
   try {
     const { text } = req.body;
@@ -470,9 +483,6 @@ export const getMessageReactions = async (req, res) => {
   }
 };
 
-
-// Add these new functions to backend/controllers/chatController.js
-
 // Pin a message
 export const pinMessage = async (req, res) => {
   try {
@@ -676,6 +686,97 @@ export const getOnlineUsers = async (req, res) => {
     res.json({ onlineUsers });
   } catch (err) {
     console.error("Get online users error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Edit message
+export const editMessage = async (req, res) => {
+  try {
+    const { chatId, messageId } = req.params;
+    const { text } = req.body;
+    const userId = req.user.id;
+
+    // Validate input
+    if (!text || !text.trim()) {
+      return res.status(400).json({ message: "Message text is required" });
+    }
+
+    // Find message
+    const message = await Message.findOne({
+      _id: messageId,
+      chatId: chatId,
+      sender: userId // Only sender can edit
+    });
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found or not authorized" });
+    }
+
+    // Update message
+    message.text = text.trim();
+    message.isEdited = true;
+    message.editedAt = new Date();
+    await message.save();
+
+    // Populate for response
+    const populatedMessage = await Message.findById(messageId)
+      .populate("sender", "username");
+
+    // Emit socket event
+    getIO().to(chatId).emit("messageEdited", {
+      chatId,
+      messageId,
+      text: populatedMessage.text,
+      isEdited: true,
+      editedAt: populatedMessage.editedAt
+    });
+
+    res.json({ 
+      message: "Message updated successfully",
+      updatedMessage: populatedMessage
+    });
+  } catch (err) {
+    console.error("Edit message error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// Delete message (soft delete)
+export const deleteMessage = async (req, res) => {
+  try {
+    const { chatId, messageId } = req.params;
+    const userId = req.user.id;
+
+    // Find message
+    const message = await Message.findOne({
+      _id: messageId,
+      chatId: chatId,
+      sender: userId // Only sender can delete
+    });
+
+    if (!message) {
+      return res.status(404).json({ message: "Message not found or not authorized" });
+    }
+
+    // Soft delete
+    message.isDeleted = true;
+    message.deletedAt = new Date();
+    message.deletedBy = userId;
+    await message.save();
+
+    // Emit socket event
+    getIO().to(chatId).emit("messageDeleted", {
+      chatId,
+      messageId,
+      deletedBy: userId
+    });
+
+    res.json({ 
+      message: "Message deleted successfully"
+    });
+  } catch (err) {
+    console.error("Delete message error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

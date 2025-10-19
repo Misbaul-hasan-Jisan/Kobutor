@@ -247,7 +247,7 @@ const MessageStatus = ({ status, readBy = [] }) => {
   );
 };
 
-// Pin Button Component (from previous code)
+// Pin Button Component
 const PinButton = ({ message, onPin, onUnpin }) => {
   const isPinned = message.isPinned;
   
@@ -259,6 +259,113 @@ const PinButton = ({ message, onPin, onUnpin }) => {
     >
       {isPinned ? "📌" : "📍"}
     </button>
+  );
+};
+
+// Message Action Menu Component
+const MessageActionMenu = ({ message, isOwnMessage, position, onClose, onEdit, onDelete }) => {
+  if (!position) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.8 }}
+      className="fixed bg-black/90 backdrop-blur-md rounded-xl p-2 shadow-2xl border border-white/20 z-50"
+      style={{
+        left: position.x,
+        top: position.y,
+      }}
+    >
+      <div className="flex flex-col space-y-1 min-w-32">
+        {isOwnMessage && (
+          <>
+            <button
+              onClick={() => {
+                onEdit(message);
+                onClose();
+              }}
+              className="px-3 py-2 text-sm text-white hover:bg-white/10 rounded-lg transition-all flex items-center space-x-2"
+            >
+              <span>✏️</span>
+              <span>Edit</span>
+            </button>
+            <button
+              onClick={() => {
+                onDelete(message._id);
+                onClose();
+              }}
+              className="px-3 py-2 text-sm text-red-400 hover:bg-red-400/10 rounded-lg transition-all flex items-center space-x-2"
+            >
+              <span>🗑️</span>
+              <span>Delete</span>
+            </button>
+          </>
+        )}
+        <button
+          onClick={onClose}
+          className="px-3 py-2 text-sm text-gray-400 hover:bg-white/5 rounded-lg transition-all"
+        >
+          Cancel
+        </button>
+      </div>
+    </motion.div>
+  );
+};
+
+// Edit Message Input Component
+const EditMessageInput = ({ message, onSave, onCancel }) => {
+  const [editText, setEditText] = useState(message.text);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+    inputRef.current?.select();
+  }, []);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (editText.trim() && editText !== message.text) {
+      onSave(message._id, editText.trim());
+    } else {
+      onCancel();
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, height: 0 }}
+      animate={{ opacity: 1, height: "auto" }}
+      exit={{ opacity: 0, height: 0 }}
+      className="bg-yellow-400/20 border border-yellow-400/30 rounded-2xl p-3 m-2"
+    >
+      <form onSubmit={handleSubmit} className="space-y-2">
+        <input
+          ref={inputRef}
+          type="text"
+          value={editText}
+          onChange={(e) => setEditText(e.target.value)}
+          className="w-full px-3 py-2 bg-black/30 border border-yellow-400/50 rounded-lg text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-yellow-400"
+          placeholder="Edit your message..."
+        />
+        <div className="flex space-x-2 justify-end">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-3 py-1 text-sm text-gray-400 hover:text-white transition-colors"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={!editText.trim() || editText === message.text}
+            className="px-3 py-1 text-sm bg-yellow-400 text-black rounded-lg hover:bg-yellow-300 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            Save
+          </button>
+        </div>
+      </form>
+    </motion.div>
   );
 };
 
@@ -704,6 +811,12 @@ function Chat() {
   const [showSwipeHint, setShowSwipeHint] = useState(true);
   const [showMobileThemeSelector, setShowMobileThemeSelector] = useState(false);
 
+  // New states for message actions
+  const [messageActionMenu, setMessageActionMenu] = useState(null);
+  const [editingMessage, setEditingMessage] = useState(null);
+  const [editText, setEditText] = useState("");
+  const longPressTimer = useRef(null);
+
   const messagesEndRef = useRef(null);
   const navigate = useNavigate();
   const { chatId: initialChatId } = useParams();
@@ -745,25 +858,53 @@ function Chat() {
     const currentTheme = getCurrentTheme();
 
     const bubbleVariants = {
-      // hidden: {
-      //   opacity: 0,
-      //   y: isOwnMessage ? 20 : -20,
-      //   scale: 0.8,
-      // },
       visible: {
         opacity: 1,
         y: 0,
         scale: 1,
-        // transition: {
-        //   type: "spring",
-        //   stiffness: 500,
-        //   damping: 30,
-        // },
       },
       animate: {
         scale: [1, 1.05, 1],
         transition: { duration: 0.3 },
       },
+    };
+
+    // Long press handler for mobile
+    const handleTouchStart = (e) => {
+      if (!isOwnMessage) return;
+      
+      longPressTimer.current = setTimeout(() => {
+        const touch = e.touches[0];
+        setMessageActionMenu({
+          message,
+          position: { x: touch.clientX, y: touch.clientY }
+        });
+      }, 500); // 500ms long press
+    };
+
+    const handleTouchEnd = () => {
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+      }
+    };
+
+    // Right click handler for desktop
+    const handleContextMenu = (e) => {
+      if (!isOwnMessage) return;
+      
+      e.preventDefault();
+      setMessageActionMenu({
+        message,
+        position: { x: e.clientX, y: e.clientY }
+      });
+    };
+
+    // Click handler for both
+    const handleClick = (e) => {
+      if (e.detail === 2 && isOwnMessage) { // Double click
+        setEditingMessage(message);
+        setEditText(message.text);
+      }
     };
 
     // Pin/Unpin handlers
@@ -815,7 +956,12 @@ function Chat() {
         variants={bubbleVariants}
         initial="hidden"
         animate={message.animate ? "animate" : "visible"}
-        className="relative group"
+        className="relative group message-bubble"
+        onContextMenu={handleContextMenu}
+        onClick={handleClick}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchCancel={handleTouchEnd}
       >
         {showDate && (
           <div className="text-center text-xs text-white/60 my-4 px-3 py-1 bg-black/30 rounded-full inline-block">
@@ -854,6 +1000,13 @@ function Chat() {
             )}
             
             <p className="mb-1 leading-relaxed break-words">{message.text}</p>
+
+            {/* Show edited indicator */}
+            {message.isEdited && (
+              <div className="text-xs text-black/60 dark:text-white/40 mt-1 italic">
+                edited
+              </div>
+            )}
 
             {message.reactions && Object.keys(message.reactions).length > 0 && (
               <div className="flex flex-wrap gap-1 mb-2">
@@ -1081,6 +1234,68 @@ function Chat() {
       requestUserStatuses(Array.from(allParticipants));
     }
   }, [activeChats, currentUserId]);
+
+  // Message action handlers
+  const handleEditMessage = async (messageId, newText) => {
+    try {
+      const token = localStorage.getItem("kobutor_token");
+      const res = await fetch(
+        `${API}/api/chats/${selectedChat._id}/messages/${messageId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ text: newText }),
+        }
+      );
+
+      if (res.ok) {
+        setEditingMessage(null);
+        setEditText("");
+        
+        // Update local state
+        setMessages(prev =>
+          prev.map(msg =>
+            msg._id === messageId
+              ? { ...msg, text: newText, isEdited: true, editedAt: new Date() }
+              : msg
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error editing message:", error);
+    }
+  };
+
+  const handleDeleteMessage = async (messageId) => {
+    try {
+      const token = localStorage.getItem("kobutor_token");
+      const res = await fetch(
+        `${API}/api/chats/${selectedChat._id}/messages/${messageId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.ok) {
+        // Update local state - either remove or show as deleted
+        setMessages(prev =>
+          prev.map(msg =>
+            msg._id === messageId
+              ? { ...msg, isDeleted: true, text: "This message was deleted" }
+              : msg
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error deleting message:", error);
+    }
+  };
 
   // Mobile Back Handler
   const handleMobileBack = () => {
@@ -1421,8 +1636,32 @@ function Chat() {
     }
   }, [socket]);
 
-  // Socket event listeners
+  // Socket event listeners for message editing and deletion
   useEffect(() => {
+    const handleMessageEdited = (data) => {
+      if (selectedChat && data.chatId === selectedChat._id) {
+        setMessages(prev =>
+          prev.map(msg =>
+            msg._id === data.messageId
+              ? { ...msg, text: data.text, isEdited: true, editedAt: data.editedAt }
+              : msg
+          )
+        );
+      }
+    };
+
+    const handleMessageDeleted = (data) => {
+      if (selectedChat && data.chatId === selectedChat._id) {
+        setMessages(prev =>
+          prev.map(msg =>
+            msg._id === data.messageId
+              ? { ...msg, isDeleted: true, text: "This message was deleted" }
+              : msg
+          )
+        );
+      }
+    };
+
     const handleReceiveMessage = (message) => {
       if (selectedChat && message.chatId === selectedChat._id) {
         setMessages((prev) => [...prev, { ...message, animate: true }]);
@@ -1484,6 +1723,8 @@ function Chat() {
     socket.on("onlineUsers", handleOnlineUsers);
     socket.on("userOnline", handleUserOnline);
     socket.on("userOffline", handleUserOffline);
+    socket.on("messageEdited", handleMessageEdited);
+    socket.on("messageDeleted", handleMessageDeleted);
 
     return () => {
       socket.off("receiveMessage", handleReceiveMessage);
@@ -1493,6 +1734,8 @@ function Chat() {
       socket.off("onlineUsers", handleOnlineUsers);
       socket.off("userOnline", handleUserOnline);
       socket.off("userOffline", handleUserOffline);
+      socket.off("messageEdited", handleMessageEdited);
+      socket.off("messageDeleted", handleMessageDeleted);
     };
   }, [selectedChat, socket]);
 
@@ -1501,6 +1744,13 @@ function Chat() {
       className="w-screen min-h-screen bg-cover bg-center text-white flex flex-col transition-all duration-500"
       style={{
         backgroundImage: `url(${isDark ? backgroundDark : background})`,
+      }}
+      onClick={() => setMessageActionMenu(null)}
+      onContextMenu={(e) => {
+        if (messageActionMenu) {
+          e.preventDefault();
+          setMessageActionMenu(null);
+        }
       }}
     >
       <Header />
@@ -1696,6 +1946,20 @@ function Chat() {
                       </div>
                     )}
 
+                    {/* Edit Message Input */}
+                    <AnimatePresence>
+                      {editingMessage && (
+                        <EditMessageInput
+                          message={editingMessage}
+                          onSave={handleEditMessage}
+                          onCancel={() => {
+                            setEditingMessage(null);
+                            setEditText("");
+                          }}
+                        />
+                      )}
+                    </AnimatePresence>
+
                     <div className="flex-1 overflow-y-auto p-4 space-y-4 messages-container">
                       {messages.map((msg, idx) => {
                         const showDate =
@@ -1790,6 +2054,23 @@ function Chat() {
           </div>
         </div>
       </div>
+
+      {/* Message Action Menu */}
+      <AnimatePresence>
+        {messageActionMenu && (
+          <MessageActionMenu
+            message={messageActionMenu.message}
+            isOwnMessage={messageActionMenu.message.sender._id === currentUserId}
+            position={messageActionMenu.position}
+            onClose={() => setMessageActionMenu(null)}
+            onEdit={(message) => {
+              setEditingMessage(message);
+              setEditText(message.text);
+            }}
+            onDelete={handleDeleteMessage}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Mobile Components */}
       <UserProfileDrawer
@@ -1921,6 +2202,30 @@ function Chat() {
           
           input, textarea {
             font-size: 16px; /* Prevents zoom on iOS */
+          }
+        }
+
+        /* Message bubble styles for better interaction */
+        .message-bubble {
+          user-select: none;
+          -webkit-user-select: none;
+          -webkit-touch-callout: none;
+        }
+
+        /* Prevent text selection on messages */
+        .messages-container {
+          -webkit-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+        }
+
+        /* Improve touch targets for message bubbles */
+        @media (max-width: 768px) {
+          .message-bubble {
+            min-height: 44px;
+            display: flex;
+            align-items: center;
           }
         }
       `}</style>

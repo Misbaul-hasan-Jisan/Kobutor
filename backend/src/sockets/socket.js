@@ -1,7 +1,7 @@
 // backend/sockets/socket.js
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
-import UserStatus from "../models/userStatus.js"; 
+import UserStatus from "../models/userStatus.js";
 
 let io;
 const chatPageUsers = new Map(); // Track users specifically on chat page
@@ -32,9 +32,8 @@ export const initIO = (server) => {
         );
         socket.userId = decoded.id;
         socket.join(decoded.id);
-        
+
         console.log(`User ${decoded.id} authenticated`);
-        
       } catch (err) {
         console.error("Authentication error:", err);
         socket.disconnect();
@@ -53,32 +52,34 @@ export const initIO = (server) => {
         chatPageUsers.set(socket.userId, {
           socketId: socket.id,
           userId: socket.userId,
-          enteredAt: new Date()
+          enteredAt: new Date(),
         });
-        
+
         // Update user status to online in database
         await UserStatus.findOneAndUpdate(
           { userId: socket.userId },
-          { 
+          {
             isOnline: true,
             socketId: socket.id,
             status: "online",
-            lastSeen: new Date()
+            lastSeen: new Date(),
           },
           { upsert: true, new: true }
         );
-        
+
         // Get ALL users currently on chat page (from our Map)
         const onlineUserIds = Array.from(chatPageUsers.keys());
-        
-        console.log(`User ${socket.userId} entered chat page, online users:`, onlineUserIds);
-        
+
+        console.log(
+          `User ${socket.userId} entered chat page, online users:`,
+          onlineUserIds
+        );
+
         // 1. Send current online users to the newly connected client
         socket.emit("onlineUsers", onlineUserIds);
-        
+
         // 2. Notify ALL other clients that this user is now online
         socket.broadcast.emit("userOnline", socket.userId);
-        
       } catch (error) {
         console.error("Error entering chat page:", error);
       }
@@ -91,22 +92,21 @@ export const initIO = (server) => {
       try {
         // Remove user from chat page users
         chatPageUsers.delete(socket.userId);
-        
+
         // Update user status to offline in database
         await UserStatus.findOneAndUpdate(
           { userId: socket.userId },
-          { 
+          {
             isOnline: false,
             status: "offline",
-            lastSeen: new Date()
+            lastSeen: new Date(),
           }
         );
-        
+
         // Notify ALL users that this user is offline
         socket.broadcast.emit("userOffline", socket.userId);
-        
+
         console.log(`User ${socket.userId} left chat page`);
-        
       } catch (error) {
         console.error("Error leaving chat page:", error);
       }
@@ -127,16 +127,16 @@ export const initIO = (server) => {
     socket.on("requestUserStatus", async (userIds) => {
       try {
         const statusMap = {};
-        
-        userIds.forEach(userId => {
+
+        userIds.forEach((userId) => {
           const isOnline = chatPageUsers.has(userId);
           statusMap[userId] = {
             isOnline,
             status: isOnline ? "online" : "offline",
-            lastSeen: new Date() // You might want to store this separately
+            lastSeen: new Date(), // You might want to store this separately
           };
         });
-        
+
         socket.emit("userStatuses", statusMap);
       } catch (error) {
         console.error("Error getting user statuses:", error);
@@ -164,7 +164,7 @@ export const initIO = (server) => {
         chatId,
         messageId,
         pinnedBy,
-        pinnedAt
+        pinnedAt,
       });
     });
 
@@ -172,7 +172,7 @@ export const initIO = (server) => {
       const { chatId, messageId } = data;
       socket.to(chatId).emit("messageUnpinned", {
         chatId,
-        messageId
+        messageId,
       });
     });
 
@@ -236,24 +236,44 @@ export const initIO = (server) => {
         socket.broadcast.emit("userOnline", socket.userId);
       }
     });
+    // Edit and Delete message handlers
+    socket.on("editMessage", (data) => {
+      const { chatId, messageId, text } = data;
+      socket.to(chatId).emit("messageEdited", {
+        chatId,
+        messageId,
+        text,
+        isEdited: true,
+        editedAt: new Date(),
+      });
+    });
+
+    socket.on("deleteMessage", (data) => {
+      const { chatId, messageId } = data;
+      socket.to(chatId).emit("messageDeleted", {
+        chatId,
+        messageId,
+        deletedBy: socket.userId,
+      });
+    });
 
     socket.on("disconnect", async () => {
       console.log("User disconnected:", socket.id);
-      
+
       if (socket.userId) {
         // Remove from chat page users
         chatPageUsers.delete(socket.userId);
-        
+
         // Update user status to offline
         await UserStatus.findOneAndUpdate(
           { userId: socket.userId },
-          { 
+          {
             isOnline: false,
             status: "offline",
-            lastSeen: new Date()
+            lastSeen: new Date(),
           }
         );
-        
+
         // Notify ALL users that this user is offline
         io.emit("userOffline", socket.userId);
       }

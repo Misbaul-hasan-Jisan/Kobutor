@@ -9,17 +9,56 @@ import backgroundDark from "../assets/homebg-dark.png";
 const API = import.meta.env.VITE_API_BASE_URL;
 
 const EyeIcon = ({ className = "" }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-    <path strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z" />
-    <circle cx="12" cy="12" r="3" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+  <svg
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+  >
+    <path
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"
+    />
+    <circle
+      cx="12"
+      cy="12"
+      r="3"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </svg>
 );
 
 const EyeOffIcon = ({ className = "" }) => (
-  <svg className={className} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-    <path strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-6 0-10-7-10-7a18.6 18.6 0 0 1 4.12-4.86" />
-    <path strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" d="M1 1l22 22" />
-    <path strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" d="M9.88 9.88A3 3 0 0 0 14.12 14.12" />
+  <svg
+    className={className}
+    xmlns="http://www.w3.org/2000/svg"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+  >
+    <path
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M17.94 17.94A10.07 10.07 0 0 1 12 19c-6 0-10-7-10-7a18.6 18.6 0 0 1 4.12-4.86"
+    />
+    <path
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M1 1l22 22"
+    />
+    <path
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M9.88 9.88A3 3 0 0 0 14.12 14.12"
+    />
   </svg>
 );
 
@@ -47,51 +86,54 @@ const SignupPage = () => {
     document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
 
-  const handleSignup = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError("");
+ // In your SignUpPage.jsx - Update handleSignup function
+const handleSignup = async (e) => {
+  e.preventDefault();
+  setIsLoading(true);
+  setError("");
 
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      setIsLoading(false);
-      return;
-    }
+  if (password !== confirmPassword) {
+    setError("Passwords do not match");
+    setIsLoading(false);
+    return;
+  }
 
-    try {
-      const response = await fetch(`${API}/api/auth/signup/kobutor`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password }),
-      });
+  try {
+    const response = await fetch(`${API}/api/auth/signup/kobutor`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username, email, password }),
+    });
 
-      if (response.ok) {
-        const userData = await response.json();
-        localStorage.setItem("kobutor_user", JSON.stringify(userData.user));
-        localStorage.setItem("kobutor_token", userData.token);
-        navigate("/");
+    if (response.ok) {
+      const data = await response.json();
+      
+      if (data.requiresVerification) {
+        // Redirect to verification page WITHOUT storing user data
+        navigate(`/verify-email?email=${encodeURIComponent(email)}`);
         return;
       }
-
-      // try to get message from server if available
-      try {
-        const errJson = await response.json();
-        setError(errJson?.message || "Failed to sign up");
-      } catch {
-        setError("Failed to sign up");
-      }
-    } catch (err) {
-      setError("Failed to connect to server");
-      console.error("Signup error:", err);
-    } finally {
-      setIsLoading(false);
+      
+      // This should not happen with the new flow
+      setError("Unexpected response from server");
+    } else {
+      const errJson = await response.json();
+      setError(errJson?.message || "Failed to sign up");
     }
-  };
+  } catch (err) {
+    setError("Failed to connect to server");
+    console.error("Signup error:", err);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   return (
     <div
       className="w-screen min-h-screen bg-cover bg-center text-white flex flex-col transition-all duration-500"
-      style={{ backgroundImage: `url(${isDark ? backgroundDark : background})` }}
+      style={{
+        backgroundImage: `url(${isDark ? backgroundDark : background})`,
+      }}
     >
       <Header />
       <DarkButton isDark={isDark} setIsDark={setIsDark} />
@@ -163,7 +205,11 @@ const SignupPage = () => {
                 aria-label={showPassword ? "Hide password" : "Show password"}
                 className="absolute inset-y-0 right-2 top-7 flex items-center px-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {showPassword ? <EyeOffIcon className="w-5 h-5 text-gray-700 dark:text-gray-200" /> : <EyeIcon className="w-5 h-5 text-gray-700 dark:text-gray-200" />}
+                {showPassword ? (
+                  <EyeOffIcon className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                ) : (
+                  <EyeIcon className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                )}
               </button>
             </div>
 
@@ -185,10 +231,18 @@ const SignupPage = () => {
                 id="toggleConfirmPassword"
                 onClick={() => setShowConfirmPassword((s) => !s)}
                 aria-pressed={showConfirmPassword}
-                aria-label={showConfirmPassword ? "Hide confirm password" : "Show confirm password"}
+                aria-label={
+                  showConfirmPassword
+                    ? "Hide confirm password"
+                    : "Show confirm password"
+                }
                 className="absolute inset-y-0 right-2 top-7 flex items-center px-2 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
-                {showConfirmPassword ? <EyeOffIcon className="w-5 h-5 text-gray-700 dark:text-gray-200" /> : <EyeIcon className="w-5 h-5 text-gray-700 dark:text-gray-200" />}
+                {showConfirmPassword ? (
+                  <EyeOffIcon className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                ) : (
+                  <EyeIcon className="w-5 h-5 text-gray-700 dark:text-gray-200" />
+                )}
               </button>
             </div>
 
@@ -204,7 +258,10 @@ const SignupPage = () => {
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Already have an account?{" "}
-              <a href="/login" className="text-blue-600 dark:text-blue-400 hover:underline">
+              <a
+                href="/login"
+                className="text-blue-600 dark:text-blue-400 hover:underline"
+              >
                 Log in
               </a>
             </p>

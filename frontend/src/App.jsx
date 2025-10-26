@@ -9,6 +9,7 @@ import Chat from './pages/Chat';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import FAQ from './pages/FAQ';
+import EmailVerification from './pages/EmailVerification';
 
 
 function App() {
@@ -25,6 +26,7 @@ function App() {
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
         <Route path="/faq" element={<FAQ />} />
+        <Route path="/verify-email" element={<EmailVerification />} />
       </Routes>
     </BrowserRouter>
   );

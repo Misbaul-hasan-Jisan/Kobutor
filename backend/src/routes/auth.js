@@ -4,11 +4,10 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import User from "../models/user.js";
-import { sendVerificationEmail } from "../services/emailService.js";
 
 const router = express.Router();
 
-// Signup route - creates user with PENDING status
+// Signup route - creates user with PENDING status and returns token for frontend
 router.post("/signup/kobutor", async (req, res) => {
   try {
     const { username, email, password } = req.body;
@@ -78,26 +77,18 @@ router.post("/signup/kobutor", async (req, res) => {
     console.log("   📊 Status:", savedUser.status);
     console.log("   ✅ Verified:", savedUser.isVerified);
 
-    // Send verification email
-    console.log("📧 Sending verification email...");
-    try {
-      await sendVerificationEmail(email, emailVerificationToken, username);
-      console.log("✅ Verification email sent successfully");
-    } catch (emailError) {
-      console.error('❌ Failed to send verification email:', emailError);
-      // Clean up - remove the user if email fails
-      await User.deleteOne({ email });
-      return res.status(500).json({ message: "Failed to send verification email. Please try again." });
-    }
-
-    console.log("🎉 SIGNUP PROCESS COMPLETED - AWAITING VERIFICATION");
+    console.log("🎉 SIGNUP PROCESS COMPLETED - RETURNING TOKEN FOR FRONTEND EMAIL");
     
-    // Return 202 Accepted (not 201 Created) since account is not active yet
-    res.status(202).json({
+    // Return token to frontend - FRONTEND will send the email
+    res.status(201).json({
       success: true,
-      message: "Verification email sent. Please check your email to complete your registration.",
-      requiresVerification: true
-      // Do NOT return user data or token - account is not active yet
+      requiresVerification: true,
+      verificationToken: emailVerificationToken, // Send to frontend
+      message: "User created successfully. Frontend will send verification email.",
+      userId: newUser._id,
+      email: email,
+      username: username
+      // Do NOT return user data or auth token - account is not active yet
     });
 
   } catch (err) {
@@ -181,7 +172,7 @@ router.get("/verify-email", async (req, res) => {
   }
 });
 
-// Resend verification email
+// Resend verification email - returns token for frontend to send email
 router.post("/resend-verification", async (req, res) => {
   try {
     const { email } = req.body;
@@ -226,21 +217,14 @@ router.post("/resend-verification", async (req, res) => {
 
     console.log("✅ New token generated and saved");
 
-    // Send verification email
-    try {
-      await sendVerificationEmail(email, emailVerificationToken, user.username);
-      console.log("✅ New verification email sent");
-    } catch (emailError) {
-      console.error('❌ Failed to send verification email:', emailError);
-      return res.status(500).json({ 
-        success: false,
-        message: "Failed to send verification email" 
-      });
-    }
+    console.log("🔄 Returning token to frontend for email sending");
 
     res.json({ 
       success: true,
-      message: "Verification email sent successfully" 
+      message: "Token generated - frontend will send verification email",
+      verificationToken: emailVerificationToken, // Send to frontend
+      email: user.email,
+      username: user.username
     });
   } catch (error) {
     console.error("💥 Resend verification error:", error);
@@ -375,75 +359,6 @@ router.get("/cleanup-expired", async (req, res) => {
     res.status(500).json({ 
       success: false,
       error: "Cleanup failed" 
-    });
-  }
-});
-
-// Resend verification email route
-router.post('/resend-verification', async (req, res) => {
-  try {
-    const { email } = req.body;
-
-    console.log('📧 Resend verification request for:', email);
-
-    // Validate email
-    if (!email) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is required'
-      });
-    }
-
-    // Find user by email
-    const user = await User.findOne({ email });
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: 'No account found with this email address'
-      });
-    }
-
-    // Check if user is already verified
-    if (user.isVerified) {
-      return res.status(400).json({
-        success: false,
-        message: 'Email is already verified. You can log in now.'
-      });
-    }
-
-    // Check if account is suspended
-    if (user.status === 'suspended') {
-      return res.status(403).json({
-        success: false,
-        message: 'This account has been suspended. Please contact support.'
-      });
-    }
-
-    // Generate new verification token
-    const verificationToken = crypto.randomBytes(32).toString('hex');
-    
-    // Update user with new token and expiration (24 hours from now)
-    user.emailVerificationToken = verificationToken;
-    user.emailVerificationExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
-    user.status = 'pending'; // Ensure status is pending
-    
-    await user.save();
-
-    console.log('✅ New verification token generated for:', email);
-
-    // Send verification email
-    await sendVerificationEmail(user.email, verificationToken, user.username);
-
-    res.json({
-      success: true,
-      message: 'Verification email sent successfully! Please check your inbox.'
-    });
-
-  } catch (error) {
-    console.error('❌ Error resending verification email:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Internal server error. Please try again later.'
     });
   }
 });

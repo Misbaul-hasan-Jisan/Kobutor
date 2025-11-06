@@ -6,6 +6,8 @@ import { useNavigate } from "react-router-dom";
 import DarkButton from "../components/darkbutton";
 import background from "../assets/homebg.png";
 import backgroundDark from "../assets/homebg-dark.png";
+import emailjs from "@emailjs/browser";
+
 const API = import.meta.env.VITE_API_BASE_URL;
 
 const EyeIcon = ({ className = "" }) => (
@@ -62,6 +64,35 @@ const EyeOffIcon = ({ className = "" }) => (
   </svg>
 );
 
+// Email sending function
+const sendVerificationEmail = async (email, username, token) => {
+  try {
+    const verificationUrl = `${
+      window.location.origin
+    }/verify-email?token=${token}&email=${encodeURIComponent(email)}`;
+
+    const templateParams = {
+      email: email, // Changed from to_email to email
+      name: username, // Changed from to_name to name
+      verification_url: verificationUrl,
+      username: username,
+    };
+
+    const result = await emailjs.send(
+      import.meta.env.VITE_EMAILJS_SERVICE_ID,
+      import.meta.env.VITE_EMAILJS_TEMPLATE_ID,
+      templateParams,
+      import.meta.env.VITE_EMAILJS_PUBLIC_KEY
+    );
+
+    console.log("✅ Email sent successfully");
+    return result;
+  } catch (error) {
+    console.error("❌ Email sending error:", error);
+    throw error;
+  }
+};
+
 const SignupPage = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -86,47 +117,65 @@ const SignupPage = () => {
     document.documentElement.classList.toggle("dark", isDark);
   }, [isDark]);
 
- // In your SignUpPage.jsx - Update handleSignup function
-const handleSignup = async (e) => {
-  e.preventDefault();
-  setIsLoading(true);
-  setError("");
+  const handleSignup = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
 
-  if (password !== confirmPassword) {
-    setError("Passwords do not match");
-    setIsLoading(false);
-    return;
-  }
-
-  try {
-    const response = await fetch(`${API}/api/auth/signup/kobutor`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, email, password }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      
-      if (data.requiresVerification) {
-        // Redirect to verification page WITHOUT storing user data
-        navigate(`/verify-email?email=${encodeURIComponent(email)}`);
-        return;
-      }
-      
-      // This should not happen with the new flow
-      setError("Unexpected response from server");
-    } else {
-      const errJson = await response.json();
-      setError(errJson?.message || "Failed to sign up");
+    if (password !== confirmPassword) {
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
     }
-  } catch (err) {
-    setError("Failed to connect to server");
-    console.error("Signup error:", err);
-  } finally {
-    setIsLoading(false);
-  }
-};
+
+    try {
+      const response = await fetch(`${API}/api/auth/signup/kobutor`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log("📨 Signup response:", data);
+
+        if (data.requiresVerification && data.verificationToken) {
+          // Send verification email from frontend
+          try {
+            await sendVerificationEmail(
+              email,
+              username,
+              data.verificationToken
+            );
+            // Redirect to verification page
+            navigate(`/verify-email?email=${encodeURIComponent(email)}`);
+          } catch (emailError) {
+            console.error("Failed to send email:", emailError);
+            // Still redirect but show message
+            setError(
+              "Account created but failed to send verification email. Please contact support."
+            );
+            navigate(`/verify-email?email=${encodeURIComponent(email)}`);
+          }
+        } else if (data.user && data.token) {
+          // Auto-verified user (if you're using that approach)
+          localStorage.setItem("kobutor_user", JSON.stringify(data.user));
+          localStorage.setItem("kobutor_token", data.token);
+          navigate("/");
+        } else {
+          setError("Unexpected response from server");
+        }
+      } else {
+        const errJson = await response.json();
+        setError(errJson?.message || "Failed to sign up");
+      }
+    } catch (err) {
+      setError("Failed to connect to server");
+      console.error("Signup error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div

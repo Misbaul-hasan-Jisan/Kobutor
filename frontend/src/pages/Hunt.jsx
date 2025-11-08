@@ -69,6 +69,9 @@ const MessagePopup = ({ message, pigeon, onRelease, onChat, color }) => {
         <div className="p-4 rounded-lg bg-white/20">
           <p className="italic">"{message}"</p>
         </div>
+        <p className="text-sm text-gray-600 mb-4">
+          From: {pigeon.districtName || pigeon.countryName}
+        </p>
 
         <div className="flex gap-3 mt-6">
           <button
@@ -95,14 +98,32 @@ function Hunt() {
   const [selectedPigeon, setSelectedPigeon] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [huntLocation, setHuntLocation] = useState("Random");
+  const [huntDistrict, setHuntDistrict] = useState("all"); // For Bangladesh districts
+  const [locations, setLocations] = useState({ 
+    local: [], 
+    international: [], 
+    bangladeshDistricts: [] 
+  });
   const navigate = useNavigate();
 
-  // Location options
-const locationOptions = [
-  { value: "Random", description: "Pigeons from all locations" },
-  { value: "Bangladesh", description: "Local pigeons from Bangladesh" },
-  { value: "Global", description: "International pigeons worldwide" },
-];
+  // Fetch available locations
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const token = localStorage.getItem('kobutor_token');
+        const response = await fetch(`${API}/api/pigeons/locations/available`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setLocations(data);
+        }
+      } catch (err) {
+        console.error('Error fetching locations:', err);
+      }
+    };
+    fetchLocations();
+  }, []);
 
   // Apply theme
   useEffect(() => {
@@ -131,12 +152,14 @@ const locationOptions = [
       setIsLoading(true);
       try {
         const token = localStorage.getItem("kobutor_token");
-        const response = await fetch(
-          `${API}/api/pigeons?location=${huntLocation}`,
-          {
-            headers: { Authorization: `Bearer ${token}` },
-          }
-        );
+        let url = `${API}/api/pigeons?location=${huntLocation}`;
+        if (huntLocation === 'BD' && huntDistrict !== 'all') {
+          url += `&district=${huntDistrict}`;
+        }
+
+        const response = await fetch(url, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
 
         if (response.ok) {
           const data = await response.json();
@@ -158,7 +181,7 @@ const locationOptions = [
     };
 
     fetchPigeons();
-  }, [huntLocation]);
+  }, [huntLocation, huntDistrict]);
 
   // Catch (open popup only)
   const handleCatchPigeon = (pigeon) => {
@@ -201,12 +224,14 @@ const locationOptions = [
     setIsLoading(true);
     try {
       const token = localStorage.getItem("kobutor_token");
-      const response = await fetch(
-        `${API}/api/pigeons?location=${huntLocation}`,
-        {
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      let url = `${API}/api/pigeons?location=${huntLocation}`;
+      if (huntLocation === 'BD' && huntDistrict !== 'all') {
+        url += `&district=${huntDistrict}`;
+      }
+
+      const response = await fetch(url, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
       if (response.ok) {
         const data = await response.json();
         const pigeonsWithPositions = data.map((pigeon) => ({
@@ -227,9 +252,36 @@ const locationOptions = [
   };
 
   const getLocationDescription = () => {
-    const location = locationOptions.find((loc) => loc.value === huntLocation);
-    return location?.description || "Search for pigeon messages";
+    if (huntLocation === 'Random') {
+      return "Pigeons from all locations";
+    }
+    
+    if (huntLocation === 'BD') {
+      if (huntDistrict === 'all') {
+        return "All pigeons from Bangladesh";
+      }
+      const district = locations.bangladeshDistricts.find(d => d.code === huntDistrict);
+      return district ? `Pigeons from ${district.name}, Bangladesh` : "Bangladesh pigeons";
+    }
+    
+    const allCountries = [...locations.local, ...locations.international];
+    const country = allCountries.find(c => c.code === huntLocation);
+    return country ? `Pigeons from ${country.name}` : "Search for pigeon messages";
   };
+
+  // Group districts by division for better organization
+  const getDistrictsByDivision = () => {
+    const divisions = {};
+    locations.bangladeshDistricts.forEach(district => {
+      if (!divisions[district.division]) {
+        divisions[district.division] = [];
+      }
+      divisions[district.division].push(district);
+    });
+    return divisions;
+  };
+
+  const districtsByDivision = getDistrictsByDivision();
 
   return (
     <>
@@ -256,31 +308,82 @@ const locationOptions = [
         </div>
 
         {/* Controls */}
-        <div className="absolute top-20 right-4 z-40 bg-black/50 dark:bg-gray-800/70 p-3 rounded-lg">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="text-white text-sm">📍 Hunt in:</span>
-            <select
-              value={huntLocation}
-              onChange={(e) => setHuntLocation(e.target.value)}
-              className="bg-white/20 px-2 py-1 rounded text-white dark:bg-gray-700 text-sm"
+        <div className="absolute top-20 right-4 z-40 bg-black/50 dark:bg-gray-800/70 p-3 rounded-lg max-w-60">
+          <div className="space-y-2">
+            {/* Country Selection */}
+            <div>
+              <label className="text-white text-sm font-medium block mb-1">
+                🌍 Hunt in:
+              </label>
+              <select
+                value={huntLocation}
+                onChange={(e) => {
+                  setHuntLocation(e.target.value);
+                  if (e.target.value !== 'BD') {
+                    setHuntDistrict('all');
+                  }
+                }}
+                className="w-full bg-white/20 px-2 py-1 rounded text-white dark:bg-gray-700 text-sm"
+              >
+                <option value="Random">Random Location</option>
+                
+                {/* Local Countries */}
+                <optgroup label="Local Countries">
+                  {locations.local.map(country => (
+                    <option key={country.code} value={country.code}>
+                      {country.name}
+                    </option>
+                  ))}
+                </optgroup>
+                
+                {/* International Countries */}
+                <optgroup label="International Countries">
+                  {locations.international.map(country => (
+                    <option key={country.code} value={country.code}>
+                      {country.name}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
+
+            {/* Bangladesh District Selection */}
+            {huntLocation === 'BD' && (
+              <div>
+                <label className="text-white text-sm font-medium block mb-1">
+                  🗺️ Bangladesh District:
+                </label>
+                <select
+                  value={huntDistrict}
+                  onChange={(e) => setHuntDistrict(e.target.value)}
+                  className="w-full bg-white/20 px-2 py-1 rounded text-white dark:bg-gray-700 text-sm"
+                >
+                  <option value="all">All Districts</option>
+                  {Object.entries(districtsByDivision).map(([division, districts]) => (
+                    <optgroup key={division} label={division}>
+                      {districts.map(district => (
+                        <option key={district.code} value={district.code}>
+                          {district.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            <p className="text-xs text-white/70 text-center">
+              {getLocationDescription()}
+            </p>
+
+            <button
+              onClick={refreshPigeons}
+              disabled={isLoading}
+              className="w-full bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50 transition-colors"
             >
-              {locationOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.value}
-                </option>
-              ))}
-            </select>
+              {isLoading ? "🔍 Searching..." : "🔄 Refresh Pigeons"}
+            </button>
           </div>
-          <p className="text-xs text-white/70 mb-2 text-center max-w-40">
-            {getLocationDescription()}
-          </p>
-          <button
-            onClick={refreshPigeons}
-            disabled={isLoading}
-            className="w-full bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50 transition-colors"
-          >
-            {isLoading ? "🔍 Searching..." : "🔄 Refresh Pigeons"}
-          </button>
         </div>
 
         {/* Pigeons */}
@@ -299,6 +402,10 @@ const locationOptions = [
                 color={pigeon.color}
                 onClick={() => handleCatchPigeon(pigeon)}
               />
+              {/* Location indicator */}
+              <div className="absolute -top-2 -right-2 bg-black/70 text-white text-xs px-1 rounded">
+                {pigeon.districtCode || pigeon.countryCode}
+              </div>
             </div>
           ))}
         </div>

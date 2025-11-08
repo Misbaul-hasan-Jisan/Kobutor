@@ -2,20 +2,53 @@
 import Pigeon from "../models/pigeon.js";
 import Chat from "../models/chat.js";
 import { getIO } from "../sockets/socket.js";
+import { countries, getCountryByCode } from "../utils/countries.js";
+import { bangladeshDistricts, getDistrictByCode } from "../utils/bangladeshDistricts.js";
 
 export const releasePigeon = async (req, res) => {
   try {
-    const { content, color, location } = req.body;
+    const { content, color, location, district } = req.body; // Added district
     const userId = req.user.id;
 
     let zone = "local";
-    if (location === "Global") zone = "international";
-    if (location === "Random") zone = "random";
+    let countryCode = "BD";
+    let countryName = "Bangladesh";
+    let districtCode = null;
+    let districtName = null;
+
+    if (location === "Random") {
+      zone = "random";
+      countryCode = null;
+      countryName = "Random";
+    } else if (location === "BD" && district) {
+      // Bangladesh with specific district
+      const bdDistrict = getDistrictByCode(district);
+      if (!bdDistrict) {
+        return res.status(400).json({ message: "Invalid district" });
+      }
+      zone = "local";
+      countryCode = "BD";
+      countryName = "Bangladesh";
+      districtCode = bdDistrict.code;
+      districtName = bdDistrict.name;
+    } else {
+      // International country
+      const country = getCountryByCode(location);
+      if (!country) {
+        return res.status(400).json({ message: "Invalid country" });
+      }
+      zone = country.zone;
+      countryCode = country.code;
+      countryName = country.name;
+    }
 
     const pigeon = await Pigeon.create({
       senderId: userId,
       zone,
-      countryCode: location === "Bangladesh" ? "BD" : null,
+      countryCode,
+      countryName,
+      districtCode,
+      districtName,
       color,
       content,
       expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
@@ -30,32 +63,38 @@ export const releasePigeon = async (req, res) => {
 
 export const getCatchablePigeons = async (req, res) => {
   try {
-    const { location } = req.query;
+    const { location, district } = req.query; // Added district
     const userId = req.user.id;
 
     let query = {
       status: "catchable",
       expiresAt: { $gt: new Date() },
-      senderId: { $ne: userId } // Don't show user's own pigeons
+      senderId: { $ne: userId }
     };
 
-    // NEW: Apply location filter based on zone system
-    if (location) {
-      if (location === 'Bangladesh') {
-        query.zone = 'local';
+    // Apply location filter
+    if (location && location !== 'Random') {
+      if (location === 'BD' && district && district !== 'all') {
+        // Filter by Bangladesh district
         query.countryCode = 'BD';
-      } else if (location === 'Global') {
-        query.zone = 'international';
-        query.countryCode = { $ne: 'BD' }; // Non-Bangladeshi pigeons
-      } else if (location === 'Random') {
-        // No additional filters for random - show pigeons from all zones
+        query.districtCode = district;
+      } else if (location === 'BD') {
+        // All Bangladesh pigeons
+        query.countryCode = 'BD';
+      } else {
+        // International country
+        const country = getCountryByCode(location);
+        if (country) {
+          query.countryCode = country.code;
+          query.zone = country.zone;
+        }
       }
     }
 
     // Get all pigeons that match the criteria
     const allPigeons = await Pigeon.find(query)
-      .populate('senderId', 'username') // Populate sender info if needed
-      .select("content color _id zone countryCode senderId")
+      .populate('senderId', 'username')
+      .select("content color _id zone countryCode countryName districtCode districtName senderId")
       .limit(50);
 
     // Get users the current user has already chatted with
@@ -74,10 +113,7 @@ export const getCatchablePigeons = async (req, res) => {
 
     // Filter out pigeons from users already chatted with
     const filteredPigeons = allPigeons.filter(pigeon => {
-      // If pigeon has no senderId (shouldn't happen but safety check)
       if (!pigeon.senderId) return true;
-      
-      // Check if sender is someone we've already chatted with
       return !alreadyChattedUserIds.has(pigeon.senderId._id ? pigeon.senderId._id.toString() : pigeon.senderId.toString());
     });
 
@@ -88,11 +124,10 @@ export const getCatchablePigeons = async (req, res) => {
       id: p._id.toString(),
       content: p.content,
       color: p.color,
-      // Convert backend zone/countryCode to frontend location display
-      location: p.zone === 'local' ? 'Bangladesh' : 
-               p.zone === 'international' ? 'Global' : 
-               p.zone === 'random' ? 'Random' : 'Unknown',
-      senderId: p.senderId // Include senderId for debugging
+      location: p.districtName || p.countryName, // Show district name for BD pigeons
+      countryCode: p.countryCode,
+      districtCode: p.districtCode,
+      senderId: p.senderId
     }));
 
     res.json(formatted);
@@ -102,6 +137,20 @@ export const getCatchablePigeons = async (req, res) => {
   }
 };
 
+// Add new endpoint to get available countries and districts
+export const getAvailableLocations = async (req, res) => {
+  try {
+    const locations = {
+      local: countries.filter(c => c.zone === 'local'),
+      international: countries.filter(c => c.zone === 'international'),
+      bangladeshDistricts: bangladeshDistricts
+    };
+    res.json(locations);
+  } catch (err) {
+    console.error("Get locations error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 export const catchPigeon = async (req, res) => {
   try {

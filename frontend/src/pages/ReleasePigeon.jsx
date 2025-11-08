@@ -43,14 +43,43 @@ const FlyingPigeon = ({ color, onAnimationEnd }) => {
 function ReleasePigeon() {
   const [message, setMessage] = useState('');
   const [color, setColor] = useState('white');
-  const [location, setLocation] = useState('Bangladesh');
+  const [location, setLocation] = useState('BD'); // Default to Bangladesh
+  const [district, setDistrict] = useState(''); // District for Bangladesh
   const [isDark, setIsDark] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isReleasing, setIsReleasing] = useState(false);
-  const [headerHeight, setHeaderHeight] = useState(64); // default
+  const [headerHeight, setHeaderHeight] = useState(64);
+  const [locations, setLocations] = useState({ 
+    local: [], 
+    international: [], 
+    bangladeshDistricts: [] 
+  });
   const navigate = useNavigate();
   const headerRef = useRef(null);
+
+  // Fetch available locations
+  useEffect(() => {
+    const fetchLocations = async () => {
+      try {
+        const token = localStorage.getItem('kobutor_token');
+        const response = await fetch(`${API}/api/pigeons/locations/available`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setLocations(data);
+          // Set default district to first district
+          if (data.bangladeshDistricts.length > 0) {
+            setDistrict(data.bangladeshDistricts[0].code);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching locations:', err);
+      }
+    };
+    fetchLocations();
+  }, []);
 
   // Detect actual header height dynamically
   useEffect(() => {
@@ -94,6 +123,11 @@ function ReleasePigeon() {
       return;
     }
 
+    if (location === 'BD' && !district) {
+      setError('Please select a district for Bangladesh.');
+      return;
+    }
+
     setIsReleasing(true);
 
     setTimeout(async () => {
@@ -104,7 +138,12 @@ function ReleasePigeon() {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${token}`,
           },
-          body: JSON.stringify({ content: message, color, location }),
+          body: JSON.stringify({ 
+            content: message, 
+            color, 
+            location,
+            district: location === 'BD' ? district : undefined 
+          }),
         });
 
         const data = await res.json();
@@ -123,6 +162,30 @@ function ReleasePigeon() {
       }
     }, 3000);
   };
+
+  const getCurrentLocationName = () => {
+    if (location === 'Random') return 'Random Location';
+    if (location === 'BD') {
+      const districtObj = locations.bangladeshDistricts.find(d => d.code === district);
+      return districtObj ? `${districtObj.name}, Bangladesh` : 'Bangladesh';
+    }
+    const country = [...locations.local, ...locations.international].find(c => c.code === location);
+    return country ? country.name : 'Unknown';
+  };
+
+  // Group districts by division for better organization
+  const getDistrictsByDivision = () => {
+    const divisions = {};
+    locations.bangladeshDistricts.forEach(district => {
+      if (!divisions[district.division]) {
+        divisions[district.division] = [];
+      }
+      divisions[district.division].push(district);
+    });
+    return divisions;
+  };
+
+  const districtsByDivision = getDistrictsByDivision();
 
   return (
     <div
@@ -205,21 +268,76 @@ function ReleasePigeon() {
             </div>
           </div>
 
-          {/* Location */}
-          <div className="mb-6 text-center">
-            <p className="mb-3 font-semibold text-white dark:text-gray-200">
-              Hunt in:
-            </p>
-            <select
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              disabled={isReleasing}
-              className="px-4 py-2 rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-yellow-400 disabled:opacity-50"
-            >
-              <option>Bangladesh</option>
-              <option>Global</option>
-              <option>Random</option>
-            </select>
+          {/* Location Selection */}
+          <div className="mb-6 space-y-4">
+            <div className="text-center">
+              <p className="mb-3 font-semibold text-white dark:text-gray-200">
+                Release to: <span className="text-yellow-400">{getCurrentLocationName()}</span>
+              </p>
+            </div>
+
+            {/* Country Selection */}
+            <div className="flex flex-col gap-2">
+              <label className="text-white dark:text-gray-200 text-sm font-medium">
+                Select Country:
+              </label>
+              <select
+                value={location}
+                onChange={(e) => {
+                  setLocation(e.target.value);
+                  if (e.target.value !== 'BD') {
+                    setDistrict('');
+                  }
+                }}
+                disabled={isReleasing}
+                className="px-4 py-2 rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-yellow-400 disabled:opacity-50"
+              >
+                <option value="Random">Random Location</option>
+                
+                {/* Local Countries */}
+                <optgroup label="Local Countries">
+                  {locations.local.map(country => (
+                    <option key={country.code} value={country.code}>
+                      {country.name}
+                    </option>
+                  ))}
+                </optgroup>
+                
+                {/* International Countries */}
+                <optgroup label="International Countries">
+                  {locations.international.map(country => (
+                    <option key={country.code} value={country.code}>
+                      {country.name}
+                    </option>
+                  ))}
+                </optgroup>
+              </select>
+            </div>
+
+            {/* Bangladesh District Selection */}
+            {location === 'BD' && (
+              <div className="flex flex-col gap-2">
+                <label className="text-white dark:text-gray-200 text-sm font-medium">
+                  Select District in Bangladesh:
+                </label>
+                <select
+                  value={district}
+                  onChange={(e) => setDistrict(e.target.value)}
+                  disabled={isReleasing}
+                  className="px-4 py-2 rounded bg-white dark:bg-gray-700 text-gray-800 dark:text-white border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-yellow-400 disabled:opacity-50"
+                >
+                  {Object.entries(districtsByDivision).map(([division, districts]) => (
+                    <optgroup key={division} label={division}>
+                      {districts.map(district => (
+                        <option key={district.code} value={district.code}>
+                          {district.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Release button */}

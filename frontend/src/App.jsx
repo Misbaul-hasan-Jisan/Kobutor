@@ -1,16 +1,15 @@
-
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
-import ReleasePigeon from './pages/ReleasePigeon';
-import Login from './pages/LogInPage';
-import Signup from './pages/SignUpPage';
-import Hunt from './pages/Hunt';
-import Chat from './pages/Chat';
-import About from './pages/About';
-import Contact from './pages/Contact';
-import FAQ from './pages/FAQ';
-import EmailVerification from './pages/EmailVerification';
-
+import ReleasePigeon from "./pages/ReleasePigeon";
+import Login from "./pages/LogInPage";
+import Signup from "./pages/SignUpPage";
+import Hunt from "./pages/Hunt";
+import Chat from "./pages/Chat";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
+import FAQ from "./pages/FAQ";
+import EmailVerification from "./pages/EmailVerification";
+import ProfileSettings from "./components/ProfileSettings";
 
 function App() {
   return (
@@ -27,6 +26,7 @@ function App() {
         <Route path="/contact" element={<Contact />} />
         <Route path="/faq" element={<FAQ />} />
         <Route path="/verify-email" element={<EmailVerification />} />
+        <Route path="/profile" element={<ProfileSettings />} />
       </Routes>
     </BrowserRouter>
   );

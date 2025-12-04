@@ -7,6 +7,101 @@ import User from "../models/user.js";
 
 const router = express.Router();
 
+// Add Google Authentication for Kobutor
+router.post("/signup/google", async (req, res) => {
+  try {
+    const { uid, email, username, displayName, photoURL, emailVerified } = req.body;
+
+    console.log("🔍 GOOGLE AUTH REQUEST (Kobutor)");
+    console.log("📝 Google user data:", { 
+      email, 
+      username: username || displayName,
+      displayName 
+    });
+
+    if (!email) {
+      return res.status(400).json({ 
+        success: false,
+        message: "Email is required" 
+      });
+    }
+
+    // Check if user already exists
+    let user = await User.findOne({ email: email.toLowerCase() });
+    
+    if (user) {
+      // User exists - check auth method
+      console.log("👤 Existing user found:", user.email);
+      
+      if (user.isVerified && user.status === "active") {
+        // User already active - just login
+        console.log("✅ User already active, generating token");
+      } else {
+        // Update user to active status
+        user.isVerified = true;
+        user.status = "active";
+        user.googleId = uid;
+        if (displayName && !user.displayName) user.displayName = displayName;
+        await user.save();
+      }
+    } else {
+      // Create new user
+      console.log("👤 Creating new Google user");
+      
+      user = new User({
+        username: username || displayName || email.split('@')[0],
+        email: email.toLowerCase(),
+        displayName: displayName || username || email.split('@')[0],
+        photoURL: photoURL || '',
+        isVerified: true,
+        status: "active",
+        googleId: uid,
+        authProvider: 'google',
+        password: null // No password for Google users
+      });
+      
+      await user.save();
+      console.log("✅ New Google user created:", user.email);
+    }
+
+    // Generate JWT token
+    const authToken = jwt.sign(
+      { 
+        id: user._id, 
+        email: user.email,
+        isVerified: user.isVerified,
+        authProvider: 'google'
+      },
+      process.env.JWT_SECRET || "secretkey",
+      { expiresIn: "7d" }
+    );
+
+    console.log("✅ Google authentication successful for:", user.email);
+
+    res.json({
+      success: true,
+      message: "Google authentication successful",
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        isVerified: user.isVerified,
+        authProvider: 'google'
+      },
+      token: authToken
+    });
+
+  } catch (error) {
+    console.error("💥 Google auth error:", error);
+    res.status(500).json({ 
+      success: false,
+      message: "Server error during Google authentication" 
+    });
+  }
+});
+
 // Signup route - creates user with PENDING status and returns token for frontend
 router.post("/signup/kobutor", async (req, res) => {
   try {
@@ -16,7 +111,10 @@ router.post("/signup/kobutor", async (req, res) => {
     console.log("📝 Input data:", { username, email, password: password ? "***" : "missing" });
 
     if (!username || !email || !password) {
-      return res.status(400).json({ message: "All fields are required" });
+      return res.status(400).json({ 
+        success: false,
+        message: "All fields are required" 
+      });
     }
 
     // Check if user already exists (including pending verification)
@@ -25,7 +123,10 @@ router.post("/signup/kobutor", async (req, res) => {
     if (existingUser) {
       if (existingUser.isVerified) {
         console.log("❌ Verified user already exists:", existingUser.email);
-        return res.status(409).json({ message: "Email already registered" });
+        return res.status(409).json({ 
+          success: false,
+          message: "Email already registered" 
+        });
       } else {
         // If user exists but not verified, remove and allow new signup
         console.log("🔄 User exists but not verified - removing old record");
@@ -55,7 +156,8 @@ router.post("/signup/kobutor", async (req, res) => {
       emailVerificationToken,
       emailVerificationExpires,
       status: "pending",
-      isVerified: false
+      isVerified: false,
+      authProvider: 'email'
     });
 
     console.log("💾 Saving user to database...");
@@ -67,7 +169,10 @@ router.post("/signup/kobutor", async (req, res) => {
     const savedUser = await User.findById(newUser._id);
     if (!savedUser) {
       console.log("❌ CRITICAL: User not found after save!");
-      return res.status(500).json({ message: "Failed to create user" });
+      return res.status(500).json({ 
+        success: false,
+        message: "Failed to create user" 
+      });
     }
 
     console.log("📋 SAVED USER DETAILS:");
@@ -93,7 +198,10 @@ router.post("/signup/kobutor", async (req, res) => {
 
   } catch (err) {
     console.error("💥 SIGNUP ERROR:", err);
-    res.status(500).json({ message: "Server error during registration" });
+    res.status(500).json({ 
+      success: false,
+      message: "Server error during registration" 
+    });
   }
 });
 
@@ -143,7 +251,8 @@ router.get("/verify-email", async (req, res) => {
       { 
         id: user._id, 
         email: user.email,
-        isVerified: true 
+        isVerified: true,
+        authProvider: user.authProvider || 'email'
       },
       process.env.JWT_SECRET || "secretkey",
       { expiresIn: "7d" }
@@ -158,7 +267,9 @@ router.get("/verify-email", async (req, res) => {
         id: user._id,
         username: user.username,
         email: user.email,
+        displayName: user.displayName,
         isVerified: true,
+        authProvider: user.authProvider || 'email'
       },
       token: authToken, // Only return token AFTER verification
     });
@@ -252,6 +363,16 @@ router.post("/login/kobutor", async (req, res) => {
       });
     }
 
+    // Check if user is a Google user trying to use password login
+    if (user.authProvider === 'google') {
+      console.log("⚠️ Google user attempting password login:", email);
+      return res.status(400).json({ 
+        success: false,
+        message: "This account uses Google Sign-In. Please use Google to login.",
+        authProvider: 'google'
+      });
+    }
+
     // BLOCK login if not verified
     if (!user.isVerified || user.status !== "active") {
       console.log("🚫 Login blocked - user not verified:", email);
@@ -280,7 +401,8 @@ router.post("/login/kobutor", async (req, res) => {
       { 
         id: user._id, 
         email: user.email,
-        isVerified: true 
+        isVerified: true,
+        authProvider: user.authProvider || 'email'
       },
       process.env.JWT_SECRET || "secretkey",
       { expiresIn: "7d" }
@@ -293,7 +415,9 @@ router.post("/login/kobutor", async (req, res) => {
         id: user._id,
         username: user.username,
         email: user.email,
+        displayName: user.displayName,
         isVerified: user.isVerified,
+        authProvider: user.authProvider || 'email'
       },
       token,
     });
@@ -309,7 +433,7 @@ router.post("/login/kobutor", async (req, res) => {
 // Debug route to check all users (remove in production)
 router.get("/debug/all-users", async (req, res) => {
   try {
-    const allUsers = await User.find({}).select('username email status isVerified emailVerificationToken emailVerificationExpires createdAt');
+    const allUsers = await User.find({}).select('username email status isVerified authProvider googleId emailVerificationToken emailVerificationExpires createdAt');
     
     console.log("🔍 DEBUG - ALL USERS IN DATABASE:");
     console.log("📊 Total users:", allUsers.length);
@@ -320,6 +444,8 @@ router.get("/debug/all-users", async (req, res) => {
       console.log("👤 Username:", user.username);
       console.log("📊 Status:", user.status);
       console.log("✅ Verified:", user.isVerified);
+      console.log("🔑 Auth Provider:", user.authProvider || 'email');
+      console.log("🔑 Google ID:", user.googleId || 'none');
       console.log("🔑 Token:", user.emailVerificationToken ? `${user.emailVerificationToken.substring(0, 20)}...` : "NULL");
       console.log("⏰ Expires:", user.emailVerificationExpires);
       console.log("📅 Created:", user.createdAt);

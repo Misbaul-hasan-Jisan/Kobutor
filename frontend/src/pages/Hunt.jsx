@@ -52,7 +52,7 @@ const MessagePopup = ({ message, pigeon, onRelease, onChat, color }) => {
       : "bg-amber-100";
 
   const textColor =
-    color === "black" ? "text-white" : "text-gray-800";
+    color === "black" ? "text-black dark:text-amber-50" : "text-gray-800";
 
   return (
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
@@ -66,23 +66,23 @@ const MessagePopup = ({ message, pigeon, onRelease, onChat, color }) => {
           ✕
         </button>
         <h3 className="text-xl font-bold mb-4">You caught a pigeon!</h3>
-        <div className="p-4 rounded-lg bg-white/20">
+        <div className="p-4 rounded-lg bg-white">
           <p className="italic">"{message}"</p>
         </div>
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-black mb-4">
           From: {pigeon.districtName || pigeon.countryName}
         </p>
 
         <div className="flex gap-3 mt-6">
           <button
             onClick={onRelease}
-            className="flex-1 px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600"
+            className="flex-1 px-4 py-2 bg-gray-500 text-black dark:text-amber-50 rounded-lg hover:bg-gray-600"
           >
             Release back to sky
           </button>
           <button
             onClick={onChat}
-            className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            className="flex-1 px-4 py-2 bg-blue-500 text-black dark:text-amber-50 rounded-lg hover:bg-blue-600"
           >
             Start Chatting
           </button>
@@ -298,12 +298,12 @@ function Hunt() {
         </div>
 
         {/* Pigeon counter */}
-        <div className="absolute top-20 left-4 z-10 bg-black/50 dark:bg-gray-800/70 p-3 rounded-lg text-white">
+        <div className="absolute top-20 left-4 z-10 bg-black/50 dark:bg-gray-800/70 p-3 rounded-lg text-white dark:text-amber-50">
           <div className="text-sm">🕊️ Pigeons: {pigeons.length}</div>
         </div>
 
         {/* Instructions */}
-        <div className="absolute bottom-20 left-0 right-0 mx-auto text-center text-white bg-black/50 p-3 rounded-lg max-w-md z-10">
+        <div className="absolute bottom-20 left-0 right-0 mx-auto text-center text-white dark:text-amber-50 bg-black/50 p-3 rounded-lg max-w-md z-10">
           <p className="text-sm">Click on pigeons to catch them and read their messages!</p>
         </div>
 
@@ -312,7 +312,7 @@ function Hunt() {
           <div className="space-y-2">
             {/* Country Selection */}
             <div>
-              <label className="text-white text-sm font-medium block mb-1">
+              <label className="text-white dark:text-amber-50 text-sm font-medium block mb-1">
                 🌍 Hunt in:
               </label>
               <select
@@ -323,7 +323,7 @@ function Hunt() {
                     setHuntDistrict('all');
                   }
                 }}
-                className="w-full bg-white/20 px-2 py-1 rounded text-white dark:bg-gray-700 text-sm"
+                className="w-full bg-white px-2 py-1 rounded text-black dark:text-amber-50 dark:bg-gray-700 text-sm"
               >
                 <option value="Random">Random Location</option>
                 
@@ -350,13 +350,13 @@ function Hunt() {
             {/* Bangladesh District Selection */}
             {huntLocation === 'BD' && (
               <div>
-                <label className="text-white text-sm font-medium block mb-1">
+                <label className="text-black dark:text-amber-50 text-sm font-medium block mb-1">
                   🗺️ Bangladesh District:
                 </label>
                 <select
                   value={huntDistrict}
                   onChange={(e) => setHuntDistrict(e.target.value)}
-                  className="w-full bg-white/20 px-2 py-1 rounded text-white dark:bg-gray-700 text-sm"
+                  className="w-full bg-white px-2 py-1 rounded text-black dark:text-amber-50 dark:bg-gray-700 text-sm"
                 >
                   <option value="all">All Districts</option>
                   {Object.entries(districtsByDivision).map(([division, districts]) => (
@@ -372,14 +372,14 @@ function Hunt() {
               </div>
             )}
 
-            <p className="text-xs text-white/70 text-center">
+            <p className="text-xs text-black dark:text-amber-50/70 text-center">
               {getLocationDescription()}
             </p>
 
             <button
               onClick={refreshPigeons}
               disabled={isLoading}
-              className="w-full bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm disabled:opacity-50 transition-colors"
+              className="w-full bg-blue-500 hover:bg-blue-600 text-black dark:text-amber-50 px-3 py-1 rounded text-sm disabled:opacity-50 transition-colors"
             >
               {isLoading ? "🔍 Searching..." : "🔄 Refresh Pigeons"}
             </button>
@@ -403,7 +403,7 @@ function Hunt() {
                 onClick={() => handleCatchPigeon(pigeon)}
               />
               {/* Location indicator */}
-              <div className="absolute -top-2 -right-2 bg-black/70 text-white text-xs px-1 rounded">
+              <div className="absolute -top-2 -right-2 bg-black/70 text-black dark:text-amber-50 text-xs px-1 rounded">
                 {pigeon.districtCode || pigeon.countryCode}
               </div>
             </div>
@@ -413,7 +413,7 @@ function Hunt() {
         {/* Loading */}
         {isLoading && (
           <div className="absolute inset-0 flex items-center justify-center bg-black/30 z-30">
-            <div className="text-white text-xl flex flex-col items-center">
+            <div className="text-black dark:text-amber-50 text-xl flex flex-col items-center">
               <div className="animate-bounce text-2xl mb-2">🐦</div>
               <p>Searching for pigeons...</p>
             </div>
@@ -423,13 +423,13 @@ function Hunt() {
         {/* Empty */}
         {!isLoading && pigeons.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center z-30">
-            <div className="text-white text-center bg-black/50 p-6 rounded-xl">
+            <div className="text-black dark:text-amber-50 text-center bg-black/50 p-6 rounded-xl">
               <div className="text-4xl mb-4">🌌</div>
               <h3 className="text-xl mb-2">No pigeons in the sky</h3>
               <p className="mb-4">Try changing location or refresh to find messages</p>
               <button
                 onClick={refreshPigeons}
-                className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
+                className="bg-blue-500 hover:bg-blue-600 text-black dark:text-amber-50 px-4 py-2 rounded transition-colors"
               >
                 🔄 Refresh
               </button>

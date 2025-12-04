@@ -214,7 +214,7 @@ function ProfileSettings() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4, duration: 0.6 }}
               whileHover={{ y: -5, transition: { duration: 0.2 } }}
-              className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:border-yellow-400/30 transition-all"
+              className="bg-transparent backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:border-yellow-400/30 transition-all"
             >
               <h3 className="text-2xl font-semibold mb-6 text-white flex items-center">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-blue-400 to-cyan-400 flex items-center justify-center mr-3">
@@ -279,7 +279,7 @@ function ProfileSettings() {
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.5, duration: 0.6 }}
               whileHover={{ y: -5, transition: { duration: 0.2 } }}
-              className="bg-white/10 backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:border-yellow-400/30 transition-all"
+              className="bg-transparent backdrop-blur-md rounded-2xl p-6 border border-white/20 hover:border-yellow-400/30 transition-all"
             >
               <h3 className="text-2xl font-semibold mb-6 text-white flex items-center">
                 <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-purple-400 to-pink-400 flex items-center justify-center mr-3">
@@ -293,7 +293,7 @@ function ProfileSettings() {
 
               <form onSubmit={handleUsernameChange} className="space-y-6">
                 <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
                     New Username
                   </label>
                   <div className="relative">
@@ -303,7 +303,7 @@ function ProfileSettings() {
                       onChange={(e) => handleUsernameInput(e.target.value)}
                       disabled={isChanging || !user.canChangeUsername}
                       placeholder="Enter your new username..."
-                      className="w-full px-4 py-3 text-lg bg-white/10 border-2 border-gray-400/30 rounded-xl focus:ring-2 focus:ring-amber-500 focus:border-amber-500 text-white placeholder-gray-400 disabled:opacity-50 transition-all duration-200"
+                      className="w-full px-4 py-3 text-lg bg-white/10 border-2 border-gray-400/30 rounded-xl focus:ring-2 focus:ring-amber-100 focus:border-amber-200 text-black dark:text-white placeholder-gray-400  disabled:opacity-50 transition-all duration-200"
                       minLength={3}
                       maxLength={20}
                     />
@@ -346,8 +346,8 @@ function ProfileSettings() {
                     >
                       <p className={`text-sm font-medium ${
                         message.type === 'success' 
-                          ? 'text-green-300'
-                          : 'text-red-300'
+                          ? 'text-black'
+                          : 'text-black'
                       }`}>
                         {message.text}
                       </p>
@@ -355,7 +355,7 @@ function ProfileSettings() {
                   )}
 
                   {/* Requirements */}
-                  <p className="text-xs text-gray-400 mt-3">
+                  <p className="text-xs text-gray-700 mt-3">
                     Username must be 3-20 characters long and contain only letters, numbers, and underscores
                   </p>
                 </div>

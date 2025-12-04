@@ -29,7 +29,7 @@ const FlyingPigeon = ({ color, onAnimationEnd }) => {
     <div
       className="absolute top-1/2 left-1/2 animate-pigeon-release pointer-events-none"
       onAnimationEnd={onAnimationEnd}
-      style={{ transform: 'translate(-50%, -50%)', zIndex: 15 }}
+      style={{ transform: 'translate(-50%, -50%)', zIndex: 50 }}
     >
       <img
         src={getPigeonImage()}
@@ -49,14 +49,13 @@ function ReleasePigeon() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isReleasing, setIsReleasing] = useState(false);
-  const [headerHeight, setHeaderHeight] = useState(64);
   const [locations, setLocations] = useState({ 
     local: [], 
     international: [], 
     bangladeshDistricts: [] 
   });
   const navigate = useNavigate();
-  const headerRef = useRef(null);
+  const mainContentRef = useRef(null);
 
   // Fetch available locations
   useEffect(() => {
@@ -79,13 +78,6 @@ function ReleasePigeon() {
       }
     };
     fetchLocations();
-  }, []);
-
-  // Detect actual header height dynamically
-  useEffect(() => {
-    if (headerRef.current) {
-      setHeaderHeight(headerRef.current.offsetHeight);
-    }
   }, []);
 
   // Theme setup
@@ -196,28 +188,33 @@ function ReleasePigeon() {
         backgroundAttachment: 'fixed',
       }}
     >
-      {/* Header */}
-      <div ref={headerRef} className="sticky top-0 z-20">
+      {/* Header - Fixed at top */}
+      <div className="fixed top-0 left-0 right-0 z-30">
         <Header />
       </div>
 
-      <DarkButton isDark={isDark} setIsDark={setIsDark} />
+      {/* Dark Button - Fixed position */}
+      <div className="fixed top-24 right-4 z-30">
+        <DarkButton isDark={isDark} setIsDark={setIsDark} />
+      </div>
 
       {/* Flying pigeon animation */}
       {isReleasing && <FlyingPigeon color={color} />}
 
-      {/* Main Content - Full screen container */}
-      <div
-        className="flex items-center justify-center w-full min-h-full px-4 sm:px-6 md:px-8 py-4"
+      {/* Main Content - With padding for fixed header */}
+      <div 
+        ref={mainContentRef}
+        className="relative w-full min-h-screen flex items-center justify-center px-4 sm:px-6 md:px-8 py-4 pt-24" // Added pt-24 for header space
         style={{ 
-          minHeight: `calc(100vh - ${headerHeight}px)`,
-          height: `calc(100vh - ${headerHeight}px)`
+          minHeight: '100vh',
+          zIndex: 20
         }}
       >
         <div
           className={`w-full max-w-2xl bg-black/60 dark:bg-gray-800/90 text-white dark:text-white rounded-xl shadow-2xl p-6 sm:p-8 backdrop-blur-md transition-all duration-300 ${
             isReleasing ? 'opacity-60 pointer-events-none' : 'opacity-100'
           }`}
+          style={{ zIndex: 25 }}
         >
           <h1 className="text-3xl sm:text-4xl font-bold mb-4 text-center">
             Release a Pigeon
@@ -365,12 +362,22 @@ function ReleasePigeon() {
           animation: pigeon-release 3s ease-in forwards;
         }
         
-        /* Ensure full coverage */
+        /* Ensure full coverage and proper stacking */
         body, html, #root {
           margin: 0;
           padding: 0;
           width: 100%;
           height: 100%;
+        }
+        
+        /* Prevent header from covering content */
+        .fixed {
+          position: fixed;
+        }
+        
+        /* Make sure content has proper z-index */
+        .relative {
+          position: relative;
         }
       `}</style>
     </div>
